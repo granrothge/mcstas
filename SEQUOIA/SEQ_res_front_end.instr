@@ -1,0 +1,292 @@
+/*************************************
+* SEQUOIA simulation
+* instrument front end
+* Updated with comments
+* %Parameters
+* Fermi_nu: [Hz] The frequnecy of the Fermi chopper.  
+* FC_num:   [1] Which Fermi chopper to use 1 is the SEQ-700 coarse resolution chopper 2 is the SEQ-100 fine resolution chopper  
+* T0_nu:    [Hz] is the frequency of the Fermi_chopper 
+* Edes:     [meV] is the expected energy transfer. This does nothing in this simulation and is simply left for compatibility with previous simulations
+* T0_off:   [s]   a manual phase offset for the T0 chopper
+* sxmin:    [m]  the post fermi chopper slit position 0 is all the way closed -0.04 is all the way open
+* sxmax:    [m]  the post fermi chopper slit position 0 is all the way closed 0.04 is all the way open
+* symin:    [m]  the post fermi chopper slit position 0 is all the way closed -0.04 is all the way open
+* symax:    [m]  the post fermi chopper slit position 0 is all the way closed 0.04 is all the way open
+* run_num:  [1] index to distinguish etween multiple files to be merged externally
+* GEG Aug 13,2014
+* 
+*************************************/
+
+
+
+DEFINE INSTRUMENT SEQ_Res(Fermi_nu,FC_num=1,T0_nu,Edes,T0_off=0.0,sxmin=-0.04,sxmax=0.04,symin=-0.04,symax=0.04,run_num=1)
+DECLARE
+%{ 
+   double Emin,Emax;
+   double Gu_R, Gu_alpha, Gu_Qc, Gu_W,Gu_m,Gu_m2;
+   double phaseoff, phasefc1, phase_sam,toffset,phase_T0,phase_Fermi;
+   double phase_m1;
+   double tmax,tplotmin,tplotmax;
+   double crad,deltat,ccurv,cwid,T0_rad,nrad;
+   double L1,L2,L3,samp_pos,LM1,LM2;
+   double z_gs,z_T0,z_pt02;
+   double pre_T01_h,pre_T01_w;
+   double sh_end_w,sh_end_h,ws,hs;
+   double ch_x, ch_y,T0_h1,T0_h2,T0_w1,T0_w2,sh_T0_slp_w,sh_T0_slp_h,T0wd2;
+   int nslits,nchans;
+   char *v_fname;
+   char *dett0optstr;
+   char *detsampoptstr;
+   char *mon1optstr;
+   char *uniquestr;
+   
+%}
+INITIALIZE
+%{
+   uniquestr=malloc(10*sizeof(char));
+   dett0optstr=malloc(200*sizeof(char));
+   detsampoptstr=malloc(400*sizeof(char));
+   mon1optstr=malloc(200*sizeof(char));
+   v_fname=malloc(200*sizeof(char));
+   L1=18.0;L2=2.0;L3=5.5;LM1=18.26;LM2=29.0032;
+   z_gs=4.1802;z_T0=10.0;
+   samp_pos=L1+L2+0.0254;
+   crad=0.11735;T0_rad=0.281+0.219; 
+   ws=0.08294;hs=0.0999;
+   sh_end_w=0.0794;sh_end_h=0.09456;
+   sh_T0_slp_w=(sh_end_w-0.05)/(samp_pos-z_gs);
+   sh_T0_slp_h=(sh_end_h-0.05)/(samp_pos-z_gs);
+   //printf("sh_T0_slp_w:%f sh_T0_slp_h:%f\n",sh_T0_slp_w,sh_T0_slp_h);
+   //printf("z_T0: %g T0_rad: %g z_gs: %g\n",z_T0,T0_rad,z_gs);
+   T0_h1=sh_T0_slp_h*(samp_pos-z_T0+T0_rad)+0.05;
+   T0_h2=T0_h1;
+   T0_w1=sh_T0_slp_w*(samp_pos-z_T0+T0_rad)+0.05;
+   T0_w2=T0_w1;T0wd2=T0_w1/2.0;
+   /* set parameters for guide reflectivity profile */
+   Gu_R=0.98;Gu_alpha=5.5;Gu_Qc=0.02;Gu_W=2e-3;Gu_m=3.6;Gu_m2=3.0;
+   Emin=Edes*0.8;Emax=Edes*1.2;
+   /* set parameters for Fermi choppers */
+   if (FC_num>0.5 && FC_num<1.5){
+       nrad=1.53;
+       nchans =16;
+   }
+   else if (FC_num>1.5 && FC_num<2.5){
+       nrad=0.58;
+       nchans =27;
+   }
+   else
+	  printf(" Fc_num must be 1 or 2");
+   /*determine emission time of certain energy neutrons after the prompt pulse */
+   ch_x=log10(Edes*1e-3);  ch_y=-0.4420*ch_x*(1+tanh((ch_x+1.1197)/0.4042))/2-0.1235*ch_x*(1-tanh((ch_x+1.1197)/0.4042))/2-0.4189*tanh((ch_x+1.1197)/0.4042)+0.5612;
+   toffset=pow(10,ch_y)/1.0e6;
+  /* set phases for critical lengths */
+   phase_T0=z_T0/(sqrt(Edes)*SE2V)+toffset+T0_off;
+   phase_sam=(samp_pos)/(sqrt(Edes)*SE2V)+toffset;
+   phase_Fermi=(L1)/(sqrt(Edes)*SE2V)+toffset;
+   phase_m1=(LM1)/(sqrt(Edes)*SE2V)+toffset;
+   tplotmin=LM1/(sqrt(Emax)*SE2V)+toffset;
+   tplotmax=LM1/(sqrt(Emin)*SE2V)+toffset;
+   
+uniquestr="SEQ_";   
+  // printf("here1");
+   sprintf(dett0optstr,"SEQ_T0_mon_Edes_%1.3e_Ferminu_%1.2e_FC_num_%g_T0_off_%1.3e_T0_nu_%1.1e_sxmin%g_sxmax%g_symin%g_symax%g%s",Edes,Fermi_nu,FC_num,T0_off,T0_nu,sxmin,sxmax,symin,symax,".tdat");
+  // printf("here2\n");
+   sprintf(detsampoptstr,"x bins=50, t bins=400 limits [%g %g] file=SEQ_Sam_mon_Edes_%1.3e_Ferminu_%1.2e_FC_num_%g_T0_off_%1.3e_T0_nu_%1.1e_sxmin%g_sxmax%g_symin%g_symax%g%s",((tplotmin-toffset)*samp_pos/LM1+toffset),((tplotmax-toffset)*samp_pos/LM1+toffset),Edes,Fermi_nu,FC_num,T0_off,T0_nu,sxmin,sxmax,symin,symax,".tdat");   
+   printf("%s\n",detsampoptstr);
+   //printf("here4\n");
+   sprintf(mon1optstr,"SEQ_mon1_Edes_%1.3e_Ferminu_%1.2e_FC_num_%g_T0_off_%1.3e_T0_nu_%1.1e_sxmin%g_sxmax%g_symin%g_symax%g%s",Edes,Fermi_nu,FC_num,T0_off,T0_nu,sxmin,sxmax,symin,symax,".tdat");
+sprintf(v_fname,"virt_src_E%1.2f_FC_num%g_%g_T0_nu_%g_%g.dat",Edes,FC_num,Fermi_nu,T0_nu,run_num); 
+ //printf("here7\n");  
+   printf("T0_h1: %e T0_w1: %e T0_h2: %e T0_w2 %e",T0_h1,T0_w1,T0_h2,T0_w2);
+   printf("%s%f %s%f\n","sh_end_h: ",sh_end_h,"sh_end_w: ",sh_end_w);
+   
+%}   
+TRACE
+COMPONENT arm1 = Progress_bar()//Arm()
+AT(0,0,0) ABSOLUTE
+COMPONENT mod=SNS_source(S_filename="source_sct521_bu_17_1.dat",
+                         width=0.0923,
+                         height=0.1113,
+                         dist=0.995,
+                         xw=0.1,
+                         yh=0.12,
+                         Emin=Emin,
+                         Emax=Emax)
+AT(0,0,0) Relative arm1
+COMPONENT core_ves=Guide_channeled(w1=0.094285,h1=0.11323,w2=0.084684,h2=0.102362,l=1.2444,
+			 	   R0=0.0,mx=Gu_m,my=Gu_m,Qcx=Gu_Qc,Qcy=Gu_Qc,
+                          W=Gu_W,nslit=1,d=0.0,alphax=Gu_alpha,alphay=Gu_alpha)
+AT(0,0,1.0106) RELATIVE mod 
+COMPONENT shutter_guide=Guide_channeled(w1=ws,h1=hs,w2=sh_end_w,h2=sh_end_h,
+                          l=1.83743,
+                          R0=Gu_R,mx=2.5,my=2.5,Qcx=Gu_Qc,Qcy=Gu_Qc,
+                          W=Gu_W,nslit=1,d=0.0,alphax=Gu_alpha,alphay=Gu_alpha)
+AT(0,0,2.2988) RELATIVE mod ROTATED (0,0.0,0) RELATIVE core_ves
+
+/* guide section 1 */
+COMPONENT guide1=Guide_channeled(w1=0.0794,h1=0.09456,w2=0.07898,h2=0.09398,
+l=0.482,R0=Gu_R,mx=Gu_m2,my=Gu_m2,Qcx=Gu_Qc,Qcy=Gu_Qc,
+W=Gu_W,nslit=1,d=0,alphax=Gu_alpha,alphay=Gu_alpha)
+at(0,0,4.2) RELATIVE mod
+COMPONENT guide2=Guide_channeled(w1=0.07898,h1=0.09398,w2=0.07854,h2=0.09337,
+l=0.482,R0=Gu_R,mx=Gu_m2,my=Gu_m2,Qcx=Gu_Qc,Qcy=Gu_Qc,
+W=Gu_W,nslit=1,d=0,alphax=Gu_alpha,alphay=Gu_alpha)
+at(0,0,4.682) RELATIVE mod
+COMPONENT guide3=Guide_channeled(w1=0.07854,h1=0.09337,w2=0.07807,h2=0.09274,
+l=0.482,R0=Gu_R,mx=Gu_m2,my=Gu_m2,Qcx=Gu_Qc,Qcy=Gu_Qc,
+W=Gu_W,nslit=1,d=0,alphax=Gu_alpha,alphay=Gu_alpha)
+at(0,0,5.164) RELATIVE mod
+COMPONENT guide4=Guide_channeled(w1=0.07807,h1=0.09274,w2=0.07758,h2=0.09207,
+l=0.482,R0=Gu_R,mx=Gu_m2,my=Gu_m2,Qcx=Gu_Qc,Qcy=Gu_Qc,
+W=Gu_W,nslit=1,d=0,alphax=Gu_alpha,alphay=Gu_alpha)
+at(0,0,5.646) RELATIVE mod
+COMPONENT guide5=Guide_channeled(w1=0.07758,h1=0.09207,w2=0.07707,h2=0.09137,
+l=0.482,R0=Gu_R,mx=Gu_m2,my=Gu_m2,Qcx=Gu_Qc,Qcy=Gu_Qc,
+W=Gu_W,nslit=1,d=0,alphax=Gu_alpha,alphay=Gu_alpha)
+at(0,0,6.128) RELATIVE mod
+COMPONENT guide6=Guide_channeled(w1=0.07707,h1=0.09137,w2=0.07653,h2=0.09064,
+l=0.482,R0=Gu_R,mx=Gu_m2,my=Gu_m2,Qcx=Gu_Qc,Qcy=Gu_Qc,
+W=Gu_W,nslit=1,d=0,alphax=Gu_alpha,alphay=Gu_alpha)
+at(0,0,6.61) RELATIVE mod
+COMPONENT guide7=Guide_channeled(w1=0.07653,h1=0.09064,w2=0.07597,h2=0.08988,
+l=0.482,R0=Gu_R,mx=Gu_m2,my=Gu_m2,Qcx=Gu_Qc,Qcy=Gu_Qc,
+W=Gu_W,nslit=1,d=0,alphax=Gu_alpha,alphay=Gu_alpha)
+at(0,0,7.092) RELATIVE mod
+COMPONENT guide8=Guide_channeled(w1=0.07597,h1=0.08988,w2=0.07538,h2=0.08908,
+l=0.482,R0=Gu_R,mx=Gu_m2,my=Gu_m2,Qcx=Gu_Qc,Qcy=Gu_Qc,
+W=Gu_W,nslit=1,d=0,alphax=Gu_alpha,alphay=Gu_alpha)
+at(0,0,7.574) RELATIVE mod
+COMPONENT guide9=Guide_channeled(w1=0.07538,h1=0.08908,w2=0.07477,h2=0.08825,
+l=0.482,R0=Gu_R,mx=Gu_m,my=Gu_m,Qcx=Gu_Qc,Qcy=Gu_Qc,
+W=Gu_W,nslit=1,d=0,alphax=Gu_alpha,alphay=Gu_alpha)
+at(0,0,8.056) RELATIVE mod
+COMPONENT guide10=Guide_channeled(w1=0.07477,h1=0.08825,w2=0.07413,h2=0.08738,
+l=0.482,R0=Gu_R,mx=Gu_m,my=Gu_m,Qcx=Gu_Qc,Qcy=Gu_Qc,
+W=Gu_W,nslit=1,d=0,alphax=Gu_alpha,alphay=Gu_alpha)
+at(0,0,8.538) RELATIVE mod
+COMPONENT guide11=Guide_channeled(w1=0.07413,h1=0.08738,w2=0.07346,h2=0.08648,
+l=0.482,R0=Gu_R,mx=Gu_m,my=Gu_m,Qcx=Gu_Qc,Qcy=Gu_Qc,
+W=Gu_W,nslit=1,d=0,alphax=Gu_alpha,alphay=Gu_alpha)
+at(0,0,9.02) RELATIVE mod
+
+
+COMPONENT t0_chopp=Vertical_T0a(len=0.474,w1=0.08,w2=0.101,nu=T0_nu,delta=0.0,tc=phase_T0,
+						     ymin=-0.045,ymax=0.045)
+at(0,0,z_T0) RELATIVE mod
+/*COMPONENT t_check1=TOF_monitor2(xmin=-T0wd2,xmax=T0wd2,ymin=-0.045,ymax=0.045,
+                                tmin=(tplotmin-toffset)*z_T0/LM1+toffset,
+								tmax=(tplotmax-toffset)*z_T0/LM1+toffset,
+								nchan=100,
+								filename=dett0optstr)
+at(0,0,z_T0+0.3) RELATIVE mod */
+/* guide section 2 */
+COMPONENT guide13=Guide_channeled(w1=0.07199,h1=0.08449,w2=0.07123,h2=0.08344,
+l=0.492,R0=Gu_R,mx=Gu_m,my=Gu_m,Qcx=Gu_Qc,Qcy=Gu_Qc,
+W=Gu_W,nslit=1,d=0,alphax=Gu_alpha,alphay=Gu_alpha)
+at(0,0,10.5) RELATIVE mod
+COMPONENT guide14=Guide_channeled(w1=0.07123,h1=0.08344,w2=0.07042,h2=0.08235,
+l=0.492,R0=Gu_R,mx=Gu_m,my=Gu_m,Qcx=Gu_Qc,Qcy=Gu_Qc,
+W=Gu_W,nslit=1,d=0,alphax=Gu_alpha,alphay=Gu_alpha)
+at(0,0,10.992) RELATIVE mod
+COMPONENT guide15=Guide_channeled(w1=0.07042,h1=0.08235,w2=0.06959,h2=0.08122,
+l=0.492,R0=Gu_R,mx=Gu_m,my=Gu_m,Qcx=Gu_Qc,Qcy=Gu_Qc,
+W=Gu_W,nslit=1,d=0,alphax=Gu_alpha,alphay=Gu_alpha)
+at(0,0,11.484) RELATIVE mod
+COMPONENT guide16=Guide_channeled(w1=0.06959,h1=0.08122,w2=0.06872,h2=0.08004,
+l=0.492,R0=Gu_R,mx=Gu_m,my=Gu_m,Qcx=Gu_Qc,Qcy=Gu_Qc,
+W=Gu_W,nslit=1,d=0,alphax=Gu_alpha,alphay=Gu_alpha)
+at(0,0,11.976) RELATIVE mod
+COMPONENT guide17=Guide_channeled(w1=0.06872,h1=0.08004,w2=0.06782,h2=0.07881,
+l=0.492,R0=Gu_R,mx=Gu_m,my=Gu_m,Qcx=Gu_Qc,Qcy=Gu_Qc,
+W=Gu_W,nslit=1,d=0,alphax=Gu_alpha,alphay=Gu_alpha)
+at(0,0,12.468) RELATIVE mod
+COMPONENT guide18=Guide_channeled(w1=0.06782,h1=0.07881,w2=0.06688,h2=0.07753,
+l=0.492,R0=Gu_R,mx=Gu_m,my=Gu_m,Qcx=Gu_Qc,Qcy=Gu_Qc,
+W=Gu_W,nslit=1,d=0,alphax=Gu_alpha,alphay=Gu_alpha)
+at(0,0,12.96) RELATIVE mod
+COMPONENT guide19=Guide_channeled(w1=0.06688,h1=0.07753,w2=0.0659,h2=0.07619,
+l=0.492,R0=Gu_R,mx=Gu_m,my=Gu_m,Qcx=Gu_Qc,Qcy=Gu_Qc,
+W=Gu_W,nslit=1,d=0,alphax=Gu_alpha,alphay=Gu_alpha)
+at(0,0,13.452) RELATIVE mod
+COMPONENT guide20=Guide_channeled(w1=0.0659,h1=0.07619,w2=0.06488,h2=0.0748,
+l=0.492,R0=Gu_R,mx=Gu_m,my=Gu_m,Qcx=Gu_Qc,Qcy=Gu_Qc,
+W=Gu_W,nslit=1,d=0,alphax=Gu_alpha,alphay=Gu_alpha)
+at(0,0,13.944) RELATIVE mod
+COMPONENT guide21=Guide_channeled(w1=0.06488,h1=0.0748,w2=0.06382,h2=0.07335,
+l=0.492,R0=Gu_R,mx=Gu_m,my=Gu_m,Qcx=Gu_Qc,Qcy=Gu_Qc,
+W=Gu_W,nslit=1,d=0,alphax=Gu_alpha,alphay=Gu_alpha)
+at(0,0,14.436) RELATIVE mod
+COMPONENT guide22=Guide_channeled(w1=0.06382,h1=0.07335,w2=0.06271,h2=0.07183,
+l=0.492,R0=Gu_R,mx=Gu_m,my=Gu_m,Qcx=Gu_Qc,Qcy=Gu_Qc,
+W=Gu_W,nslit=1,d=0,alphax=Gu_alpha,alphay=Gu_alpha)
+at(0,0,14.928) RELATIVE mod
+COMPONENT guide23=Guide_channeled(w1=0.06271,h1=0.07183,w2=0.06156,h2=0.07024,
+l=0.492,R0=Gu_R,mx=Gu_m,my=Gu_m,Qcx=Gu_Qc,Qcy=Gu_Qc,
+W=Gu_W,nslit=1,d=0,alphax=Gu_alpha,alphay=Gu_alpha)
+at(0,0,15.42) RELATIVE mod
+COMPONENT guide24=Guide_channeled(w1=0.06156,h1=0.07024,w2=0.06036,h2=0.06858,
+l=0.492,R0=Gu_R,mx=Gu_m,my=Gu_m,Qcx=Gu_Qc,Qcy=Gu_Qc,
+W=Gu_W,nslit=1,d=0,alphax=Gu_alpha,alphay=Gu_alpha)
+at(0,0,15.912) RELATIVE mod
+COMPONENT guide25=Guide_channeled(w1=0.06036,h1=0.06858,w2=0.05911,h2=0.06684,
+l=0.492,R0=Gu_R,mx=Gu_m,my=Gu_m,Qcx=Gu_Qc,Qcy=Gu_Qc,
+W=Gu_W,nslit=1,d=0,alphax=Gu_alpha,alphay=Gu_alpha)
+at(0,0,16.404) RELATIVE mod
+COMPONENT guide26=Guide_channeled(w1=0.05911,h1=0.06684,w2=0.0578,h2=0.06502,
+l=0.492,R0=Gu_R,mx=Gu_m,my=Gu_m,Qcx=Gu_Qc,Qcy=Gu_Qc,
+W=Gu_W,nslit=1,d=0,alphax=Gu_alpha,alphay=Gu_alpha)
+at(0,0,16.896) RELATIVE mod
+COMPONENT guide27=Guide_channeled(w1=0.0578,h1=0.06502,w2=0.05643,h2=0.0631,
+l=0.492,R0=Gu_R,mx=Gu_m,my=Gu_m,Qcx=Gu_Qc,Qcy=Gu_Qc,
+W=Gu_W,nslit=1,d=0,alphax=Gu_alpha,alphay=Gu_alpha)
+at(0,0,17.388) RELATIVE mod
+
+COMPONENT fermi_chopp=Fermi_chop2a(len=0.10,w=0.06,ymin=-.0325,ymax=.0325,
+                                        nu=Fermi_nu,delta=0.0,tc=phase_Fermi
+                                       ,nchan=nchans,bw=0.0005,blader=nrad)
+AT (0,0,L1) RELATIVE mod
+COMPONENT adjustable_slits=Slit(xmin=sxmin,xmax=sxmax,ymin=symin,ymax=symax)
+at (0,0,LM1-0.01) RELATIVE mod
+/*COMPONENT Monitor1=TOF_monitor2(xmin=-0.035,xmax=0.035,ymin=-0.035,ymax=0.035,
+								tmin=tplotmin,
+								tmax=tplotmax,
+								nchan=100,
+								filename=mon1optstr)
+AT (0,0,LM1) RELATIVE mod*/
+/*guide section 3 */
+//
+COMPONENT guide29=Guide_channeled(w1=0.0554,h1=0.06166,w2=0.05473,h2=0.0607,
+l=0.228,R0=Gu_R,mx=Gu_m,my=Gu_m,Qcx=Gu_Qc,Qcy=Gu_Qc,
+W=Gu_W,nslit=1,d=0,alphax=Gu_alpha,alphay=Gu_alpha)
+at(0,0,18.235+.0254) RELATIVE mod
+/* guide section 4 */
+COMPONENT guide31=Guide_channeled(w1=0.0547,h1=0.06066,w2=0.05328,h2=0.05866,
+l=0.4585,R0=Gu_R,mx=Gu_m,my=Gu_m,Qcx=Gu_Qc,Qcy=Gu_Qc,
+W=Gu_W,nslit=1,d=0,alphax=Gu_alpha,alphay=Gu_alpha)
+at(0,0,18.473+.0254) RELATIVE mod
+COMPONENT guide32=Guide_channeled(w1=0.05328,h1=0.05866,w2=0.05181,h2=0.05655,
+l=0.4585,R0=Gu_R,mx=Gu_m,my=Gu_m,Qcx=Gu_Qc,Qcy=Gu_Qc,
+W=Gu_W,nslit=1,d=0,alphax=Gu_alpha,alphay=Gu_alpha)
+at(0,0,18.9315+.0254) RELATIVE mod
+/* guide section 5 */
+COMPONENT guide34=Guide_channeled(w1=0.05181,h1=0.05654,w2=0.05043,h2=0.05456,
+l=0.409,R0=Gu_R,mx=Gu_m,my=Gu_m,Qcx=Gu_Qc,Qcy=Gu_Qc,
+W=Gu_W,nslit=1,d=0,alphax=Gu_alpha,alphay=Gu_alpha)
+at(0,0,19.391+.0254) RELATIVE mod
+
+COMPONENT vout = Virtual_output(filename = v_fname,bufsize=0,type="binary")
+  AT (0, 0, samp_pos) RELATIVE mod
+
+
+
+FINALLY
+%{                       	      
+  // free(dett0optstr);free(detsampoptstr);free(mon1optstr);	
+%}	                
+END
+
+
+
+
+
+
