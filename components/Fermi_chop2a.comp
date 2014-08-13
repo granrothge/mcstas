@@ -1,8 +1,8 @@
 /******************************************************************
 *
-*  McStas, version 1.0, released October 26, 1998
-*          Maintained by Kristian Nielsen and Kim Lefmann,
-*          Risoe National Laboratory, Roskilde, Denmark
+*  McStas, version 2.1, 
+*          
+*          
 *
 *  Component: Fermi_chop2 
 *
@@ -33,7 +33,7 @@ DEFINE COMPONENT Fermi_chop2a
 DEFINITION PARAMETERS (len, w, nu, delta, tc, ymin, ymax, nchan, bw, blader)
 SETTING PARAMETERS ()
 OUTPUT PARAMETERS (omega, r_blade, x_width, nn, tdr)
-STATE PARAMETERS (x, y, z, vx, vy, vz, t, s1, s2, p)
+/*STATE PARAMETERS (x, y, z, vx, vy, vz, t, s1, s2, p)*/
 SHARE
 %{
 #ifndef FERMI_CHOP_DEFS
