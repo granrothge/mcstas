@@ -1,0 +1,85 @@
+/*************************************
+* SEQUOIA simulation
+* back of instrument with resolution sample
+* INPUTS:
+*        
+* 
+* GEG Oct 26,2012
+* 
+*************************************/
+
+
+
+DEFINE INSTRUMENT SEQ_Res(string Vsourcefname,Edes,Et,Delta_Et,dety,det_cyl_ang,det_h,det_w=0.0762)
+DECLARE
+%{ 
+   
+   double L1,L2,L3,samp_pos,LM1,LM2;
+ 
+   double x_det,z_det,det_t,Ef,det_deltaT,r_det,det_tf;
+   
+   
+   char *uniquestr;
+   
+%}
+INITIALIZE
+%{
+   uniquestr=malloc(10*sizeof(char));
+   
+   L1=18.0;L2=2.0;L3=5.5;
+   
+   /* paramters for resolution sample */ 
+   det_cyl_ang=DEG2RAD*det_cyl_ang ;
+   z_det=L3*cos(det_cyl_ang);
+   x_det=L3*sin(det_cyl_ang);
+   r_det=sqrt(x_det*x_det+dety*dety+z_det*z_det);
+   Ef=Edes-Et;
+   det_tf=r_det/sqrt(Ef)/SE2V;
+   det_t=((L1+L2)/sqrt(Edes)/SE2V+det_tf)*1e6;
+   det_deltaT=(0.5*det_tf*Delta_Et/Ef)*1e6;
+   
+   
+uniquestr="test";
+ 
+ printf("det_t: %e det_tf: %e \n",det_t,det_tf); 
+ 
+  
+   
+   
+%}   
+TRACE
+COMPONENT arm1 = Progress_bar()//Arm()
+AT(0,0,0) ABSOLUTE
+COMPONENT vsource=Virtual_input(file=Vsourcefname,type="binary")
+AT(0,0,0) RELATIVE arm1
+COMPONENT Sample_Arm=Arm()
+AT(0,0,0)  RELATIVE vsource
+COMPONENT sample = TOFRes_sample(xwidth=0.05, yheight=0.05,zthick=0.02,
+  target_x=x_det,target_y=dety,target_z=z_det,focus_xw=det_w,focus_yh=det_h,time_bin=det_t,time_width=det_deltaT)
+AT (0.0,0.0,0.0) RELATIVE Sample_Arm
+COMPONENT det_Arm=Arm()
+AT(0,0,0.021)RELATIVE Sample_Arm ROTATED (0,det_cyl_ang,0) RELATIVE Sample_Arm
+COMPONENT det_Arm2=Arm()
+AT(0,0,0.021)RELATIVE Sample_Arm ROTATED (0,det_cyl_ang-0.275,0) RELATIVE Sample_Arm
+COMPONENT det_Arm3=Arm()
+AT(0,0,0.021)RELATIVE Sample_Arm ROTATED (0,det_cyl_ang+0.275,0) RELATIVE Sample_Arm
+
+
+
+COMPONENT detector1 = Res_monitor(filename="output1.res",res_sample_comp=sample,xwidth=0.0254,yheight=0.0254,zthick=0.0254)
+AT (0,dety,L3) RELATIVE det_Arm 
+COMPONENT detector2 = Res_monitor(filename="output2.res",res_sample_comp=sample,xwidth=0.0254,yheight=0.0254,zthick=0.0254)
+AT (0,dety,L3) RELATIVE det_Arm2
+COMPONENT detector3 = Res_monitor(filename="output3.res",res_sample_comp=sample,xwidth=0.0254,yheight=0.0254,zthick=0.0254)
+AT (0,dety,L3) RELATIVE det_Arm3 
+
+FINALLY
+%{                       	      
+  // free(dett0optstr);free(detoptstr);free(detsampoptstr);free(detdetoptstr);free(mon1optstr);free(mon2optstr);	
+%}	                
+END
+
+
+
+
+
