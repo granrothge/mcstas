@@ -1,0 +1,14 @@
+function diff_plot(cls,func,p,constr)
+    if nargin <4
+        constr='b';
+    end 
+    if ~strcmp(cls.type,'1d')
+      error('data must be of 1d type')
+    end
+    xlimits=cls.limits;
+    xdat=linspace(xlimits(1),xlimits(2),length(cls.dat));
+    ydat=feval(func,cls.x,p);
+    diff=cls.y(:)-ydat(:);
+    plot(cls.x(:),diff(:),constr);
+    xlabel(cls.xlabel);
+    ylabel('diff');

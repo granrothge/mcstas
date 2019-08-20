@@ -1,0 +1,12 @@
+function [Efvec,ymat,dat]=tof2E(cls,L1,L3,Ei)
+vi=sqrt(Ei/5.227e-6);
+xlimits=cls.limits(1:2);
+ylimits=cls.limits(3:4);
+[y,x]=size(cls.dat);
+xvec=linspace(xlimits(1),xlimits(2),x);
+yvec=linspace(ylimits(1),ylimits(2),y);
+xmat=repmat(xvec,y,1);
+ymat=repmat(yvec',1,x);
+t1=L1./vi;
+Efvec=5.227e-6.*(L3./(xmat.*1e-6-t1)).^2;
+dat=cls.dat;

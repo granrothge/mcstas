@@ -1,0 +1,27 @@
+% function for initial try at a mcstas 2d class for creating a class structure
+% to work with mcstas data
+% GEG 12.28.2000
+% updated for mcstas 1.6
+% GEG 1.15.2002
+function cls=mcstasclass2(a)
+if nargin==0
+    cls.xlabel='';
+    cls.ylabel='';
+    cls.title='';
+    cls.type='';
+    cls.dat=[];
+    cls.err=[];
+    cls.limits=[];
+    cls.bin
+elseif isa(a,'mcstasclass2')
+    cls=a;
+else    
+  cls.xlabel=a.xlabel;
+  cls.ylabel=a.ylabel;
+  cls.title=a.title;
+  cls.type=a.type;
+  cls.dat=a.dat;
+  cls.limits=a.limits;
+  cls.err=a.err;
+  cls=class(cls,'mcstasclass2')
+end  

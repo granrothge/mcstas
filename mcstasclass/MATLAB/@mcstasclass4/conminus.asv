@@ -1,0 +1,25 @@
+function [clsout]=conminus(cls,c,axis)
+% subtract a constant from the x of y value of a mcstasclass 1d object
+%GEG 8 17 2001
+%TODO
+% Extend to 2d class as well
+% error checking
+clsout=cls;
+xlimits=cls.limits(1:2);
+if ~strcmp(cls.type,'1d')
+    ylimits=cls.limits(3:4);
+if(~strcmp(axis,'x')&~strcmp(axis,'y')&~strcmp(axis,'z'))
+   disp('axis value must be x,y, or z')
+ if strcmp(axis,'x')
+     clsout.limits(1:2)=xlimits-c;
+ else
+     if strcmp(cls.type,'2d')
+         if strcmp(axis,'y')
+             clsout.limits(3:4)=ylimits-c;
+         else
+            clsout.dat=clsout    
+         end
+ end
+ clsout.mat(:,clnum)=cls.mat(:,clnum)-c;
+end 
+

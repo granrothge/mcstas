@@ -1,0 +1,42 @@
+function [clsout]=cut2d21dcls(cls,cutdir,cutcen,cutwidth)
+%[clsout]=cut2d21dcls(cls,cutdir,cutcen,cutwidth)
+%function to make a cut out of a 2d mcstasclass2 file and turn it into a 1d mcstasclass2 file
+%GEG 1.16.2001
+if ~strcmp(cls.type,'2d')
+    error('error data must be of 2 d type')
+end  
+    [xvec,yvec]=createxyvec(cls);
+    clsout.err=[];
+    clsout.ylabel='I';
+    clsout.type='1d';
+  if strcmp(cutdir,'x')
+         cutmax=min(find(yvec>cutcen+cutwidth/2));
+         cutmin=max(find(yvec<cutcen-cutwidth/2));
+         x=xvec;
+         for idx=1:length(xvec)
+           clsout.dat(idx)=sum(cls.dat(cutmin:cutmax,idx));
+           if ~isempty(cls.err)
+             clsout.err(idx)=sqrt(sum((cls.err(cutmin:cutmax,idx)).^2));
+           end  
+         end
+         clsout.xlabel=cls.xlabel;
+         clsout.limits=[min(x) max(x)];
+         clsout.title=strcat(num2str(cutwidth),' wide cut about',num2str(cutcen),'in',cls.ylabel);
+         clsout=mcstasclass2(clsout);
+  elseif strcmp(cutdir,'y')
+         cutmax=min(find(xvec>cutcen+cutwidth/2));
+         cutmin=max(find(xvec<cutcen-cutwidth/2));
+         x=yvec;
+         for idx=1:length(yvec)
+           clsout.dat(idx)=sum(cls.dat(idx,cutmin:cutmax));
+           if ~isempty(cls.err)
+              clsout.err(idx)=sqrt(sum((cls.err(idx,cutmin:cutmax)).^2));
+           end
+         end 
+         clsout.xlabel=cls.ylabel;
+         clsout.limits=[min(x) max(x)];
+         clsout.title=strcat(num2str(cutwidth),' wide cut about',num2str(cutcen),'in',cls.xlabel);
+         clsout=mcstasclass2(clsout);
+  else    
+    disp('cutdir must be either x or y')
+  end        
