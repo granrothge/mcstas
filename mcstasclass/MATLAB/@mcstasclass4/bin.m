@@ -10,9 +10,9 @@ elseif ~strcmp(cls.type,'1d')
     errror('must be of a type 1d')
 else
     clsout=cls;
-    x=cls.mat(:,1);
-    y=cls.mat(:,2);
-    e=cls.mat(:,3);
+    x=linspace(cls.limits(1),cls.limits(2),cls.bins);
+    y=cls.dat;
+    e=cls.err;
     [x,st]=sort(x);
     y=y(st);
     e=e(st);
@@ -45,7 +45,9 @@ else
        yres=[yres;sum(ycombi)/length(xcombi)];
        eres=[eres;sqrt(sum(ecombi.*ecombi))/length(xcombi)];
     end 
-    clsout.mat=[xres';yres';eres']';
+    clsout.dat=yres';
+    clsout.err=eres';
+    clsout.bins=length(xres);
     clsout.limits=[min(xres) max(xres)];
     clsout.title='binned'; 
     clsout=mcstasclass4(clsout);
