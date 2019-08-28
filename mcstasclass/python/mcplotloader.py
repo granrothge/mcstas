@@ -1,3 +1,5 @@
+# rework of mcploatloader.py for plotting single monitor data
+
 '''
 functionality for loading mccode data into suitable data types,
 and assembling it in a plot-friendly way.
@@ -25,61 +27,61 @@ class DataMcCode(object):
 
 class Data0D(DataMcCode):
     pass
-    
+
 class Data1D(DataMcCode):
     ''' 1d plots use this data type '''
     def __init__(self):
         super(Data1D, self).__init__()
-        
+
         self.component = ''
         self.filename = ''
         self.title = ''
         self.xlabel = ''
         self.ylabel = ''
-        
+
         self.xvar = ''
         self.xlimits = () # pair
-        
+
         self.variables = []
-        
+
         self.yvar = () # pair
         self.values = () # triplet
         self.statistics = ''
-        
+
         # data references
         self.xvals = []
         self.yvals = []
         self.y_err_vals = []
         self.Nvals = []
-    
+
     def clone(self):
         data = Data1D()
-        
+
         data.filepath = self.filepath
-        
+
         data.component = self.component
         data.filename = self.filename
         data.title = self.title
         data.xlabel = self.xlabel
         data.ylabel = self.ylabel
-        
+
         data.xvar = self.xvar
         data.xlimits = self.xlimits
-        
+
         data.variables = self.variables
-        
+
         data.yvar = self.yvar
         data.values = self.values
         data.statistics = self.statistics
-        
+
         # data references
         data.xvals = self.xvals
         data.yvals = self.yvals
         data.y_err_vals = self.y_err_vals
         data.Nvals = self.Nvals
-        
+
         return data
-        
+
     def get_stats_title(self):
         '''I=.... Err=... N=...; X0=...; dX=...;'''
         try:
@@ -87,7 +89,7 @@ class Data1D(DataMcCode):
         except:
             stitle = '%s of %s' % (self.yvar[0], self.xvar)
         return stitle
-    
+
     def __str__(self):
         return 'Data1D, ' + self.get_stats_title()
 
@@ -95,37 +97,37 @@ class Data2D(DataMcCode):
     ''' PSD data type '''
     def __init__(self):
         super(Data2D, self).__init__()
-        
+
         self.component = ''
         self.filename = ''
         self.title = ''
-        
+
         self.xlabel = ''
         self.ylabel = ''
-        
+
         self.xvar = ''
         self.yvar = ''
         self.zvar = ''
         self.xylimits = () # quadruple
-        
+
         self.values = () # triplet
         self.statistics = '' # quadruple
         self.signal = ''
-        
+
         # data references
         self.zvals = []
         self.counts = []
-    
+
     def get_stats_title(self):
         '''I=.... Err=... N=...; X0=...; dX=...;'''
         stitle = '%s=%e Err=%e N=%d' % (self.zvar, self.values[0], self.values[1], self.values[2])
         return stitle
-    
+
     def __str__(self):
         return 'Data2D, ' + self.get_stats_title()
 
 
-''' 
+'''
 Utility funcitons for loading and parsing mccode output files
 '''
 freetext_pat = '.+'
@@ -162,7 +164,7 @@ def _parse_1D_monitor(text):
         '''# yvar: (I,I_err)'''
         m = re.search('\# yvar: \(([\w]+),([\w]+)\)\n', text)
         data.yvar = (m.group(1), m.group(2))
-        
+
         '''# values: 6.72365e-17 4.07766e-18 4750'''
         m = re.search('\# values: ([\d\-\+\.e]+) ([\d\-\+\.e]+) ([\d\-\+\.e]+)\n', text)
         data.values = (Decimal(m.group(1)), Decimal(m.group(2)), float(m.group(3)))
@@ -179,18 +181,18 @@ def _parse_1D_monitor(text):
         for l in lines:
             if '#' in l:
                 continue
-            
+
             vals = l.split()
             xvals.append(float(vals[0]))
             yvals.append(float(vals[1]))
             y_err_vals.append(float(vals[2]))
             Nvals.append(float(vals[3]))
-        
+
         data.xvals = xvals
         data.yvals = yvals
         data.y_err_vals = y_err_vals
         data.Nvals = Nvals
-    
+
     except Exception as e:
         print('Data1D load error.')
         raise e
@@ -215,21 +217,21 @@ def _parse_2D_monitor(text):
         '''# title: PSD monitor'''
         m = re.search('\# title: (%s)\n' % freetext_pat, text)
         data.title = m.group(1)
-        
+
         '''# xlabel: X position [cm]'''
         m = re.search('\# xlabel: (%s)\n' % freetext_pat, text)
         data.xlabel = m.group(1)
         '''# ylabel: Y position [cm]'''
         m = re.search('\# ylabel: (%s)\n' % freetext_pat, text)
         data.ylabel = m.group(1)
-        
+
         '''# xvar: X'''
         m = re.search('\# xvar: (%s)\n' % freetext_pat, text)
         data.xvar = m.group(1)
         '''# yvar: Y '''
         m = re.search('\# yvar: (%s)\n' % freetext_pat, text)
         data.yvar = m.group(1)
-        
+
         '''# zvar: I '''
         m = re.search('\# zvar: (%s)\n' % freetext_pat, text)
         data.zvar = m.group(1)
@@ -239,18 +241,18 @@ def _parse_2D_monitor(text):
         '''
         m = re.search('\# xylimits: ([\d\.\-\+e]+) ([\d\.\-\+e]+) ([\d\.\-\+e]+) ([\d\.\-\+e]+)([\ \d\.\-\+e]*)\n', text)
         data.xlimits = (float(m.group(1)), float(m.group(2)), float(m.group(3)), float(m.group(4)))
-        
+
         '''# values: 6.72365e-17 4.07766e-18 4750'''
         m = re.search('\# values: ([\d\+\-\.e]+) ([\d\+\-\.e]+) ([\d\+\-\.e]+)\n', text)
         data.values = (Decimal(m.group(1)), Decimal(m.group(2)), float(m.group(3)))
         '''# statistics: X0=5.99569; dX=0.0266368;'''
         m = re.search('\# statistics: X0=([\d\.\+\-e]+); dX=([\d\.\+\-e]+); Y0=([\d\.\+\-e]+); dY=([\d\.\+\-e]+);\n', text)
-        
+
         data.statistics = 'X0=%.2E; dX=%.2E; Y0=%.2E; dY=%.2E;' % (Decimal(m.group(1)), Decimal(m.group(2)), Decimal(m.group(3)), Decimal(m.group(4)))
         '''# signal: Min=0; Max=1.20439e-18; Mean=4.10394e-21;'''
         m = re.search('\# signal: Min=([\ \d\.\+\-e]+); Max=([\ \d\.\+\-e]+); Mean=([\ \d\.\+\-e]+);\n', text)
         data.signal = 'Min=%f; Max=%f; Mean=%f;' % (float(m.group(1)), float(m.group(2)), float(m.group(3)))
-        
+
         '''# Data [detector/PSD.dat] I:'''
         '''# Events [detector/PSD.dat] N:'''
         lines = text.splitlines()
@@ -298,7 +300,7 @@ def _load_monitor(monitorfile):
         if not f == 'No file':
             text = open(f).read()
             # determine 1D / 2D data
-            
+
             m = re.search('\# type: (\w+)', text)
             typ = m.group(1)
             if typ == 'array_0d':
@@ -316,12 +318,12 @@ def _load_monitor(monitorfile):
         else:
             return Data0D()
     data = DataHandle(load_fct=lambda m=monitorfile: load(monfile=m))
-    
+
     return data
 
 def _get_filenames_from_mccodesim(mccodesim):
     dir = dirname(mccodesim)
-    
+
     text = open(mccodesim).read()
     data_idx = text.find('begin data')
     filenames = []
@@ -331,7 +333,7 @@ def _get_filenames_from_mccodesim(mccodesim):
         for line in sec.splitlines():
             if m == None:
                 m = re.search(r'filename: ([\w\.\,_\-+]+)\s*', line)
-        if m: 
+        if m:
             filenames.append(join(dir, m.group(1)))
         else:
             filenames.append('No file')
@@ -356,12 +358,12 @@ def _load_multiplot_1D_lst(f_dat):
         header = Data1D()
         header.component = ''
         header.filename = 'mccode.dat'
-        
+
         # NOTE: title this is overwritten below to be equal to yvar
         '''# title: Scan of lambda'''
         m = re.search('\# title: ([\w, ]+)\n', text)
         header.title = m.group(1)
-        
+
         '''# xlabel: 'lambda\''''
         m = re.search('\# xlabel: ([\w \[\]\/\^\',]+)\n', text)
         header.xlabel = m.group(1).strip("\'")
@@ -374,15 +376,15 @@ def _load_multiplot_1D_lst(f_dat):
         m = re.search('\# xvars: ([\w, ]+)\n', text)
         header.xvar = m.group(1).replace(',', '')
         num_xvars = len(header.xvar.split())
-        
+
         '''# xlimits: 6 7'''
         m = re.search('\# xlimits: ([\d\.\-e]+) ([\d\.\-e]+)\n', text)
         header.xlimits = (float(m.group(1)), float(m.group(2)))
-        
+
         '''# variables: lambda Ldetector_I Ldetector_ERR PSDrad_I PSDrad_ERR PSDrad_I PSDrad_ERR detector_I detector_ERR'''
         m = re.search('\# variables: ([\w ]+)\n', text)
         variables = m.group(1).split()
-        
+
         '''# yvars: (AutoTOFL0_I,AutoTOFL0_ERR) (AutoTOF0_I,AutoTOF0_ERR) (AutoL0_I,AutoL0_ERR) ...'''
         m = re.search('\# yvars: ([\w \(\)\,]+)\n', text)
         unsplit = m.group(1)
@@ -390,13 +392,13 @@ def _load_multiplot_1D_lst(f_dat):
         unsplit = unsplit.replace(')', ' ')
         unsplit = unsplit.replace(',', ' ')
         yvars = unsplit.split()
-        
+
         # get x and y values (the latter is a list of a list, the infamous yvals_lst which contains yvals values, which are lists)
         lines = text.splitlines()
         xvals = []
         yvals_lst = []
         yvals_err_lst = []
-        
+
         for l in lines:
             if '#' in l:
                 continue
@@ -408,7 +410,7 @@ def _load_multiplot_1D_lst(f_dat):
                 yvals_lst[i].append(l.split()[2*i+num_xvars])
                 yvals_err_lst[i].append(l.split()[2*i+num_xvars+1])
         header.xvals = xvals
-        
+
         # create a new instance for each y variable
         for i in range(len(yvars)//2):
             data = header.clone()
@@ -437,7 +439,7 @@ def _load_sweep_monitors(rootdir):
             if f not in mnames and f != 'mccode.sim' and f != 'mcstas.sim':
                 mnames.append(f)
         arg.append(dirsignature)
-    
+
     # get the subdirs somehow
     subdirtuple = []
     for root, dirs, files in walk(top=rootdir):
@@ -446,7 +448,7 @@ def _load_sweep_monitors(rootdir):
     subdirs = [t[0] for t in subdirtuple]
     # get the right order of subdirs by recreating them a little bit
     subdirs = [join(dirname(subdirs[i]), str(i)) for i in range(len(subdirs))] # sortalpha(subdirs)
-    
+
     # get the monitor ordering right by snooping the '  filename:' labels out of the scan point file 0/mccode.sim
     def get_subdir_monitors(subdir):
         mons = []
@@ -466,18 +468,18 @@ def _load_sweep_monitors(rootdir):
             for line in sec.splitlines():
                 if m == None:
                     m = re.search(r'filename: ([\w\.\,_\-+]+)\s*', line)
-                    if m: 
+                    if m:
                         mons.append(join(subdir, m.group(1)))
                         break
             if not m:
                 mons.append('No file')
-                    
+
         return mons
-   
+
     monitors_by_subdir = []
     for s in subdirs:
         monitors_by_subdir.append(get_subdir_monitors(s))
-    
+
     # notice that columns and rows are swapped, so we get to use a list-of-lists data structure, with rows the same monitor
     sweep_monitors = [None]*len(monitors_by_subdir[0])
     for i in range(len(monitors_by_subdir[0])):          # N
@@ -485,12 +487,12 @@ def _load_sweep_monitors(rootdir):
         for j in range(len(monitors_by_subdir)):
             mon_lst[j] = _load_monitor(monitors_by_subdir[j][i])
         sweep_monitors[i] = mon_lst
-    
+
     return sweep_monitors
 
 
 '''
-Flowchart functions for decision and terminal nodes (there are no process nodes in the implemented chart, 
+Flowchart functions for decision and terminal nodes (there are no process nodes in the implemented chart,
 although a cleaner implementation might include some).
 
 Decision (bool) functions only probe disk contents. Terminal functions will load and interprit data files.
@@ -569,27 +571,27 @@ def is_mccodesim_w_monitors(args):
 
     f = join(d, indexfile)
     args['simfile'] = f
-    
+
     # look for any "unkonwn" files, could be data files
     datfiles = glob.glob(join(d, '*'))
-    if 'mccode.sim' in datfiles: 
+    if 'mccode.sim' in datfiles:
         datfiles.remove('mccode.sim')
-    if 'mcstas.sim' in datfiles: 
+    if 'mcstas.sim' in datfiles:
         datfiles.remove('mcstas.sim')
-    if 'mccode.dat' in datfiles: 
+    if 'mccode.dat' in datfiles:
         datfiles.remove('mccode.dat')
     return len(datfiles) > 0
 
 def has_datfile(args):
     d = args['directory']
-    
+
     # look for any "unkonwn" files, could be data files
     datfiles = glob.glob(join(d, '*'))
-    if 'mccode.sim' in datfiles: 
+    if 'mccode.sim' in datfiles:
         datfiles.remove('mccode.sim')
-    if 'mcstas.sim' in datfiles: 
+    if 'mcstas.sim' in datfiles:
         datfiles.remove('mcstas.sim')
-    if 'mccode.dat' in datfiles: 
+    if 'mccode.dat' in datfiles:
         datfiles.remove('mccode.dat')
     if len(datfiles) > 0:
         for f in datfiles:
@@ -602,7 +604,7 @@ def has_datfile(args):
 
 def has_multiple_datfiles(args):
     d = args['directory']
-    
+
     # look for any "unkonwn" files, could be data files
     datfiles = glob.glob(join(d, '*'))
     if 'mccode.sim' in datfiles:
@@ -674,7 +676,7 @@ def load_sweep(args):
         f_sim = join(d, 'mccode.sim')
     elif isfile(join(d, 'mcstas.sim')):
         f_sim = join(d, 'mcstas.sim')
-        
+
     f_dat = join(d, 'mccode.dat')
 
     # load primary data_handle, 1D sweep values
@@ -775,5 +777,5 @@ class McCodeDataLoader():
         exit_node = control.process(args=args)
 
         self.plot_graph = exit_node.result
-        
+
         self.directory = args['directory']
