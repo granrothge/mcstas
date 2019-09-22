@@ -101,7 +101,52 @@ class Data1D(DataMcCode):
         ax.set_xlabel(self.xlabel)
         ax.set_ylabel(self.ylabel)
         ax.set_title(self.title)
-            
+    def bin(self, binwidth):
+        """
+        rebins the data into bins of width binwidth
+        """
+        # Do we need to do type checking
+        outcls = self.clone()
+        xidx_sorted = np.argsort(self.xvals)
+        x = self.xvals[xidx_sorted]
+        y = self.yvals[xidx_sorted]
+        e = self.y_err_vals[xidx_sorted]
+
+        # for storing the values to be combined
+        xcombi = []
+        ycombi = []
+        ecombi = []
+        # for storing the results
+        xres=[]
+        yres=[]
+        eres=[]
+
+        for idx, xval in enumerate(x):
+            if len(xcombi)>0:
+                if (x-xcombi[0])>binwidth:
+                    xres.append(np.sum(xcombi)/len(xcombi))
+                    yres.append(np.sum(ycombi)/len(xcombi))
+                    eres.append(np.sqrt(np.sum(ecombi*ecombi))/len(xcombi))
+                    xcombi = [xval]
+                    ycombi = [y[idx]]
+                    ecombi = [e[idx]]
+            else:
+                xcombi.append(xval)
+                ycombi.append(y[idx])
+                ecombi.append(e[idx])
+        # handle last point
+        if len(xcombi)>0:
+            xres.append(np.sum(xcombi)/len(xcombi))
+            yres.append(np.sum(ycombi)/len(xcombi))
+            eres.append(np.sqrt(np.sum(ecombi*ecombi))/len(xcombi))
+        outcls.xvals = xres
+        outcls.yvals = yres
+        outcls.y_err_vals = eres
+        outcls.title = title+"bined to {}".format(binwidth)
+        outcls.xlimits = (np.min(xres),np.max(xres))
+return outcls
+
+
 
     def plot(self):
         "plot an x y plot"
