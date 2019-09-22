@@ -9,10 +9,8 @@ import re
 from os.path import isfile, isdir, join, dirname, basename, splitext, exists
 from os import walk
 from decimal import Decimal
-
-
-from .plotgraph import DataHandle,
-
+import numpy as np
+import matplotlib.pyplot as plt
 '''
 McCode simulation output data types.
 '''
@@ -92,6 +90,21 @@ class Data1D(DataMcCode):
 
     def __str__(self):
         return 'Data1D, ' + self.get_stats_title()
+
+    def errorbar(self,ax=None):
+        """
+        plot an errorbar plot
+        """
+        if ax==None:
+            fig, ax= plt.subplots()
+        ax.errorbar(self.xvals,self.yvals,self.y_err_vals)
+        ax.set_xlabel(self.xlabel)
+        ax.set_ylabel(self.ylabel)
+        ax.set_title(self.title)
+            
+
+    def plot(self):
+        "plot an x y plot"
 
 class Data2D(DataMcCode):
     ''' PSD data type '''
