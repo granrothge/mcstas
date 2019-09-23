@@ -185,6 +185,7 @@ class Data2D(DataMcCode):
         # data references
         self.zvals = []
         self.counts = []
+        self.errors = []
 
     def get_stats_title(self):
         '''I=.... Err=... N=...; X0=...; dX=...;'''
@@ -336,9 +337,11 @@ def _parse_2D_monitor(text):
 
         '''# Data [detector/PSD.dat] I:'''
         '''# Events [detector/PSD.dat] N:'''
+        '''# Errors [detecot/PSD.dat] I_err:'''
         lines = text.splitlines()
         dat = True
         events = False
+        errors = False
         for l in lines:
             if '# Data ' in l:
                 dat = True
@@ -353,6 +356,7 @@ def _parse_2D_monitor(text):
                 # NOTE: error values are not loaded
                 dat = False
                 events = False
+                errors = True
                 continue
 
             if dat:
@@ -365,6 +369,12 @@ def _parse_2D_monitor(text):
                 try:
                     vals = [float(item) for item in l.strip().split()]
                     data.counts.append(vals)
+                except:
+                    pass
+            if events:
+                try:
+                    vals = [float(item) for item in l.strip().split()]
+                    data.errors.append(vals)
                 except:
                     pass
 
