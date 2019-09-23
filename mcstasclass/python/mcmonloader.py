@@ -201,7 +201,7 @@ class Data2D(DataMcCode):
         zarr = np.array(self.zvals)
         zshp = zarr.shape
         xvals = np.linspace(self.xylimits[0],self.xylimits[1],zshp[0]+1)
-        yvals = np.linspace(self.xylimits[2],self.xylimits[2],zshp[0]+1)
+        yvals = np.linspace(self.xylimits[2],self.xylimits[3],zshp[0]+1)
         ax.pcolor(xvals,yvals,self.zvals,**kwargs)
         self._add_titles(ax)
 
