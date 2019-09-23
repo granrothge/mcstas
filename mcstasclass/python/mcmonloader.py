@@ -19,9 +19,17 @@ class DataMcCode(object):
     def __init__(self, *args, **kwargs):
         self.title = ''
         self.filepath = ''
+        self.xlabel = ''
+        self.ylabel = ''
 
     def __str__(self, *args, **kwargs):
         return self.title
+
+    def _add_titles(self,ax):
+        """ add titles to plot helper function"""
+        ax.set_xlabel(self.xlabel)
+        ax.set_ylabel(self.ylabel)
+        ax.set_title(self.title)
 
 class Data0D(DataMcCode):
     pass
@@ -90,12 +98,6 @@ class Data1D(DataMcCode):
 
     def __str__(self):
         return 'Data1D, ' + self.get_stats_title()
-
-    def _add_titles(self,ax):
-        """ add titles to plot helper function"""
-        ax.set_xlabel(self.xlabel)
-        ax.set_ylabel(self.ylabel)
-        ax.set_title(self.title)
 
     def errorbar(self,ax=None,**kwargs):
         """
