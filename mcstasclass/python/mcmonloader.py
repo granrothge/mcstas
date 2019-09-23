@@ -339,25 +339,22 @@ def _parse_2D_monitor(text):
         '''# Events [detector/PSD.dat] N:'''
         '''# Errors [detecot/PSD.dat] I_err:'''
         lines = text.splitlines()
-        dat = True
+        dat = False
         events = False
         errors = False
         for l in lines:
             if '# Data ' in l:
                 dat = True
-                continue
 
             if '# Events ' in l:
                 dat = False
                 events = True
-                continue
 
             if '# Errors ' in l:
                 # NOTE: error values are not loaded
                 dat = False
                 events = False
                 errors = True
-                continue
 
             if dat:
                 try:
