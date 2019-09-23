@@ -110,7 +110,7 @@ class Data1D(DataMcCode):
         "plot an x y plot"
         if ax==None:
             fig, ax= plt.subplots()
-        ax.plot(self.xvlas,self.yvals,**kwargs)
+        ax.plot(self.xvals,self.yvals,**kwargs)
         self._add_titles(ax)
 
     def bin(self, binwidth):
