@@ -91,6 +91,12 @@ class Data1D(DataMcCode):
     def __str__(self):
         return 'Data1D, ' + self.get_stats_title()
 
+    def _add_titles(self,ax):
+        """ add titles to plot helper function"""
+        ax.set_xlabel(self.xlabel)
+        ax.set_ylabel(self.ylabel)
+        ax.set_title(self.title)
+
     def errorbar(self,ax=None):
         """
         plot an errorbar plot
@@ -98,9 +104,7 @@ class Data1D(DataMcCode):
         if ax==None:
             fig, ax= plt.subplots()
         ax.errorbar(self.xvals,self.yvals,self.y_err_vals)
-        ax.set_xlabel(self.xlabel)
-        ax.set_ylabel(self.ylabel)
-        ax.set_title(self.title)
+        self._add_titles(ax)
 
     def bin(self, binwidth):
         """
