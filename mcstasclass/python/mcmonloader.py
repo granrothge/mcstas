@@ -109,7 +109,7 @@ class Data1D(DataMcCode):
         self._add_titles(ax)
 
     def plot(self,ax=None,**kwargs):
-        "plot an x y plot"
+        """plot an x y plot"""
         if ax==None:
             fig, ax= plt.subplots()
         ax.plot(self.xvals,self.yvals,**kwargs)
@@ -193,6 +193,19 @@ class Data2D(DataMcCode):
 
     def __str__(self):
         return 'Data2D, ' + self.get_stats_title()
+
+    def pcolor(self,ax=None,**kwargs):
+        """ make a pcolor plot of a 2D mcstas monitor """
+        if ax==None:
+            fig, ax= plt.subplots()
+        zarr = np.array(self.zvals)
+        zshp = zarr.shape
+        xvals = np.linspace(self.xylimits[0],self.xylimits[1],zshp[0]+1)
+        yvals = np.linspace(self.xylimits[2],self.xylimits[2],zshp[0]+1)
+        ax.pcolor(xvals,yvals,self.zvals,**kwargs)
+        self._add_titles(ax)
+
+
 
 
 '''
@@ -308,7 +321,7 @@ def _parse_2D_monitor(text):
         # xylimits: 0 5e+06 0.5 100
         '''
         m = re.search('\# xylimits: ([\d\.\-\+e]+) ([\d\.\-\+e]+) ([\d\.\-\+e]+) ([\d\.\-\+e]+)([\ \d\.\-\+e]*)\n', text)
-        data.xlimits = (float(m.group(1)), float(m.group(2)), float(m.group(3)), float(m.group(4)))
+        data.xylimits = (float(m.group(1)), float(m.group(2)), float(m.group(3)), float(m.group(4)))
 
         '''# values: 6.72365e-17 4.07766e-18 4750'''
         m = re.search('\# values: ([\d\+\-\.e]+) ([\d\+\-\.e]+) ([\d\+\-\.e]+)\n', text)
