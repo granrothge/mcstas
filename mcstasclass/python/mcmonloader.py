@@ -340,7 +340,7 @@ def _parse_2D_monitor(text):
         '''# Errors [detecot/PSD.dat] I_err:'''
         lines = text.splitlines()
 
-
+        t_flags={'data':False,'counts':False,'errors':False}
         for l in lines:
             if '# Data ' in l:
                 t_flags={'data':True,'counts':False,'errors':False}
@@ -354,24 +354,17 @@ def _parse_2D_monitor(text):
             if np.any(list(t_flags.values())):
                 try:
                     vals = [float(item) for item in l.strip().split()]
+                    if t_flags['data']:
+                        data.zvals.append(vals)
+                    if t_flags['counts']:
+                        data.counts.append(vals)
+                    if t_flags['errors']:
+                        data.errors.append(vals) 
                 except:
                     pass
 
-            if t_flags['data']:
-                try:
-                    data.zvals.append(vals)
-                except:
-                    pass
-            if t_flags['counts']:
-                try:
-                    data.counts.append(vals)
-                except:
-                    pass
-            if t_flags['errors']:
-                try:
-                    data.errors.append(vals)
-                except:
-                    pass
+
+
 
     except Exception as e:
         print('Data2D load error.')
