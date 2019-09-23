@@ -339,38 +339,36 @@ def _parse_2D_monitor(text):
         '''# Events [detector/PSD.dat] N:'''
         '''# Errors [detecot/PSD.dat] I_err:'''
         lines = text.splitlines()
-        dat = False
-        events = False
-        errors = False
+
+
         for l in lines:
             if '# Data ' in l:
-                dat = True
+                t_flags={'data':True,'counts':False,'errors':False}
 
             if '# Events ' in l:
-                dat = False
-                events = True
+                t_flags={'data':False,'counts':True,'errors':False}
 
             if '# Errors ' in l:
-                # NOTE: error values are not loaded
-                dat = False
-                events = False
-                errors = True
+                t_flags={'data':False,'counts':False,'errors':True}
 
-            if dat:
+            if np.any(list(t_flags.values())):
                 try:
                     vals = [float(item) for item in l.strip().split()]
+                except:
+                    pass
+
+            if t_flags['data']:
+                try:
                     data.zvals.append(vals)
                 except:
                     pass
-            if events:
+            if t_flags['counts']:
                 try:
-                    vals = [float(item) for item in l.strip().split()]
                     data.counts.append(vals)
                 except:
                     pass
-            if events:
+            if t_flags['errors']:
                 try:
-                    vals = [float(item) for item in l.strip().split()]
                     data.errors.append(vals)
                 except:
                     pass
