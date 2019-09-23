@@ -97,13 +97,20 @@ class Data1D(DataMcCode):
         ax.set_ylabel(self.ylabel)
         ax.set_title(self.title)
 
-    def errorbar(self,ax=None):
+    def errorbar(self,ax=None,**kwargs):
         """
         plot an errorbar plot
         """
         if ax==None:
             fig, ax= plt.subplots()
-        ax.errorbar(self.xvals,self.yvals,self.y_err_vals)
+        ax.errorbar(self.xvals,self.yvals,self.y_err_vals,**kwargs)
+        self._add_titles(ax)
+
+    def plot(self,ax=None,**kwargs):
+        "plot an x y plot"
+        if ax==None:
+            fig, ax= plt.subplots()
+        ax.plot(self.xvlas,self.yvals,**kwargs)
         self._add_titles(ax)
 
     def bin(self, binwidth):
@@ -151,10 +158,6 @@ class Data1D(DataMcCode):
         outcls.xlimits = (np.min(xres),np.max(xres))
         return outcls
 
-
-
-    def plot(self):
-        "plot an x y plot"
 
 class Data2D(DataMcCode):
     ''' PSD data type '''
