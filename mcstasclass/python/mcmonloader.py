@@ -206,6 +206,34 @@ class Data2D(DataMcCode):
         ax.pcolor(xvals,yvals,self.zvals,**kwargs)
         self._add_titles(ax)
 
+    def cut(self,cutdir,cutcen,cutwidth,xlims=None):
+        """ cut a 2D McStas data set into a 1D data set
+            cutdir: must be 'x' or 'y'
+            cutcen: center in other direction
+            cutwidth: width in other direction
+            xlims: limits in new x direction, default = None which uses full length
+
+        """
+        xyvar_dict = {'x':self.xvar,'y':self.yvar}
+        xylabel_dict = {'x':self.xlabel,'y':self.ylabel}
+        xylimits_dict = {'x':self.xylimits[:2],'y':self.xylimits[2:]}
+        int_dir = np.lib.arraysetops.setxor1d(cutdir,np.array(list(xyvar_dict.keys())))[0]
+
+        data = Data1D()
+        data.component = "cut from {}".format(self.filename)
+        data.filename = self.filename
+        data.title = "${}\pm{}$ in {}".format(cutcen,cutwidth/2,int_dir)
+        data.xvar = xyvar_dict[cutdir]
+        data.xlabel = xylabel_dict[cutdir]
+        if xlims == None:
+            data.xlimits = xylimits_dict[cutdir]
+        else:
+            data.xlimits = xlims
+        data.yvar = self.zvar
+
+
+
+
 
 
 
@@ -359,7 +387,7 @@ def _parse_2D_monitor(text):
                     if t_flags['counts']:
                         data.counts.append(vals)
                     if t_flags['errors']:
-                        data.errors.append(vals) 
+                        data.errors.append(vals)
                 except:
                     pass
 
