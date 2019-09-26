@@ -205,6 +205,15 @@ class Data2D(DataMcCode):
         yvals = np.linspace(self.xylimits[2],self.xylimits[3],zshp[0]+1)
         ax.pcolor(xvals,yvals,self.zvals,**kwargs)
         self._add_titles(ax)
+    def createxyvec(self):
+        """
+        create a vector for the x and y coordinates from a 2D class
+        """
+        zarr = np.array(self.zvals)
+        zshp = zarr.shape
+        xvec = np.linspace(self.xylimits[0],self.xylimits[1],zshp[0]+1)
+        yvec = np.linspace(self.xylimits[2],self.xylimits[3],zshp[0]+1)
+        return xvec,yvec
 
     def cut(self,cutdir,cutcen,cutwidth,xlims=None):
         """ cut a 2D McStas data set into a 1D data set
