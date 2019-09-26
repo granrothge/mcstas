@@ -202,6 +202,7 @@ class Data2D(DataMcCode):
         xvals,yvals=self.createxyvec()
         ax.pcolor(xvals,yvals,self.zvals,**kwargs)
         self._add_titles(ax)
+
     def createxyvec(self):
         """
         create a vector for the x and y coordinates from a 2D class
@@ -220,9 +221,13 @@ class Data2D(DataMcCode):
             xlims: limits in new x direction, default = None which uses full length
 
         """
+        xylimits = self.xylimits
+        xylimits_idx = np.zeros(4)
+        xylimitsidx_dict = {'x':(0,1),'y':(2,3)}
         xyvar_dict = {'x':self.xvar,'y':self.yvar}
         xylabel_dict = {'x':self.xlabel,'y':self.ylabel}
         xylimits_dict = {'x':self.xylimits[:2],'y':self.xylimits[2:]}
+        zaxes_dict = {'x':0,'y':1}
         int_dir = np.lib.arraysetops.setxor1d(cutdir,np.array(list(xyvar_dict.keys())))[0]
 
         data = Data1D()
@@ -231,17 +236,26 @@ class Data2D(DataMcCode):
         data.title = "${}\pm{}$ in {}".format(cutcen,cutwidth/2,int_dir)
         data.xvar = xyvar_dict[cutdir]
         data.xlabel = xylabel_dict[cutdir]
+        xvals,yvals = self.createxyvec()
+        xyvals_dict = {'x':xvals,'y':yvals}
+        zvals = np.array(self.zvals)
         if xlims == None:
             data.xlimits = xylimits_dict[cutdir]
+            xmin_idx=0
+            xmax_idx=-1
         else:
-            data.xlimits = xlims
+            xmin_idx = np.where(xyvals_dict[cutdir]<xlims[0])[0].max()
+            xmax_idx = np.where(xyvals_dict[cutdir]>xlims[1])[0].min()
+            data.xlimits = (xyvals_dict[cutdir][xmin_idx],xyvals_dict[cutdir][xmax_idx])
+        xylimitsidx[xylimitsidx_dict[cutdir]]=[xmin_idx,xmax_idx]
         data.yvar = self.zvar
+        cut_min_idx = np.where(xyvals_dict[int_dir] < (cutcen-cutwidth/2.0))[0].max()
+        cut_max_idx = np.where(xyvals_dict[int_dir] > (cutcen+cutwidth/2.0))[0].min()
+        xylimitsidx[xylimitsidx_dict[int_dir]] = [cut_min_idx,cut_max_idx]
+        data.xvals = xyvals_dict[cutdir][xmin_idx:xmax_idx]
+        data.yvals = np.sum(zvals[xylimitsidx[0]:xylimitsidx[1],xylimitsidx[2]:xylimits[idx3]],axis=zaxes_dict[cutdir])
 
-
-
-
-
-
+        return data
 
 '''
 Utility funcitons for loading and parsing mccode output files
