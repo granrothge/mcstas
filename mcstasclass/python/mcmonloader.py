@@ -222,8 +222,8 @@ class Data2D(DataMcCode):
 
         """
         xylimits = self.xylimits
-        xylimits_idx = np.zeros(4)
-        xylimitsidx_dict = {'x':(0,1),'y':(2,3)}
+        xylimits_idx = np.zeros(4,dtype=np.int)
+        xylimitsidx_dict = {'x':[0,1],'y':[2,3]}
         xyvar_dict = {'x':self.xvar,'y':self.yvar}
         xylabel_dict = {'x':self.xlabel,'y':self.ylabel}
         xylimits_dict = {'x':self.xylimits[:2],'y':self.xylimits[2:]}
@@ -247,13 +247,14 @@ class Data2D(DataMcCode):
             xmin_idx = np.where(xyvals_dict[cutdir]<xlims[0])[0].max()
             xmax_idx = np.where(xyvals_dict[cutdir]>xlims[1])[0].min()
             data.xlimits = (xyvals_dict[cutdir][xmin_idx],xyvals_dict[cutdir][xmax_idx])
-        xylimitsidx[xylimitsidx_dict[cutdir]]=[xmin_idx,xmax_idx]
+        xylimits_idx[xylimitsidx_dict[cutdir]]=[xmin_idx,xmax_idx]
         data.yvar = self.zvar
         cut_min_idx = np.where(xyvals_dict[int_dir] < (cutcen-cutwidth/2.0))[0].max()
         cut_max_idx = np.where(xyvals_dict[int_dir] > (cutcen+cutwidth/2.0))[0].min()
-        xylimitsidx[xylimitsidx_dict[int_dir]] = [cut_min_idx,cut_max_idx]
+        xylimits_idx[xylimitsidx_dict[int_dir]] = [cut_min_idx,cut_max_idx]
+        print (xylimits_idx)
         data.xvals = xyvals_dict[cutdir][xmin_idx:xmax_idx]
-        data.yvals = np.sum(zvals[xylimitsidx[0]:xylimitsidx[1],xylimitsidx[2]:xylimits[idx3]],axis=zaxes_dict[cutdir])
+        data.yvals = np.sum(zvals[xylimits_idx[0]:xylimits_idx[1],xylimits_idx[2]:xylimits_idx[3]],axis=zaxes_dict[cutdir])
 
         return data
 
