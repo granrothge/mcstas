@@ -223,11 +223,11 @@ class Data2D(DataMcCode):
         """
         xylimits = self.xylimits
         xylimits_idx = np.zeros(4,dtype=np.int)
-        xylimitsidx_dict = {'x':[0,1],'y':[2,3]}
+        xylimitsidx_dict = {'x':[2,3],'y':[0,1]}
         xyvar_dict = {'x':self.xvar,'y':self.yvar}
         xylabel_dict = {'x':self.xlabel,'y':self.ylabel}
         xylimits_dict = {'x':self.xylimits[:2],'y':self.xylimits[2:]}
-        zaxes_dict = {'x':0,'y':1}
+        zaxes_dict = {'x':1,'y':0}
         int_dir = np.lib.arraysetops.setxor1d(cutdir,np.array(list(xyvar_dict.keys())))[0]
 
         data = Data1D()
@@ -239,6 +239,7 @@ class Data2D(DataMcCode):
         xvals,yvals = self.createxyvec()
         xyvals_dict = {'x':xvals,'y':yvals}
         zvals = np.array(self.zvals)
+        errvals = np.array(self.errors)
         if xlims == None:
             data.xlimits = xylimits_dict[cutdir]
             xmin_idx=0
@@ -252,9 +253,12 @@ class Data2D(DataMcCode):
         cut_min_idx = np.where(xyvals_dict[int_dir] < (cutcen-cutwidth/2.0))[0].max()
         cut_max_idx = np.where(xyvals_dict[int_dir] > (cutcen+cutwidth/2.0))[0].min()
         xylimits_idx[xylimitsidx_dict[int_dir]] = [cut_min_idx,cut_max_idx]
-        print (xylimits_idx)
-        data.xvals = xyvals_dict[cutdir][xmin_idx:xmax_idx]
-        data.yvals = np.sum(zvals[xylimits_idx[0]:xylimits_idx[1],xylimits_idx[2]:xylimits_idx[3]],axis=zaxes_dict[cutdir])
+        #print (xylimits_idx)
+        #note need to convert bin boundaries to centers for 1D data set.
+        data.xvals = (xyvals_dict[cutdir][xmin_idx:(xmax_idx-1)]+xyvals_dict[cutdir][(xmin_idx+1):xmax_idx])/2
+        data.yvals = np.sum(zvals[xylimits_idx[0]:xylimits_idx[1],xylimits_idx[2]:xylimits_idx[3]],axis=zaxes_dict[int_dir])
+        inerrors = errvals[xylimits_idx[0]:xylimits_idx[1],xylimits_idx[2]:xylimits_idx[3]]
+        data.y_err_vals = np.sqrt(np.sum(inerrors*inerrors,axis=zaxes_dict[int_dir]))
 
         return data
 
