@@ -263,10 +263,10 @@ class Data2D(DataMcCode):
         xylimits_idx[xylimitsidx_dict[int_dir]] = [cut_min_idx,cut_max_idx]
         #print (xylimits_idx)
         #note need to convert bin boundaries to centers for 1D data set.
-        data.xvals = (xyvals_dict[cutdir][xmin_idx:(xmax_idx-1)]+xyvals_dict[cutdir][(xmin_idx+1):xmax_idx])/2
-        data.yvals = np.sum(zvals[xylimits_idx[0]:xylimits_idx[1],xylimits_idx[2]:xylimits_idx[3]],axis=zaxes_dict[int_dir])
+        data.xvals = np.array((xyvals_dict[cutdir][xmin_idx:(xmax_idx-1)]+xyvals_dict[cutdir][(xmin_idx+1):xmax_idx]))/2
+        data.yvals = np.array(np.sum(zvals[xylimits_idx[0]:xylimits_idx[1],xylimits_idx[2]:xylimits_idx[3]],axis=zaxes_dict[int_dir]))
         inerrors = errvals[xylimits_idx[0]:xylimits_idx[1],xylimits_idx[2]:xylimits_idx[3]]
-        data.y_err_vals = np.sqrt(np.sum(inerrors*inerrors,axis=zaxes_dict[int_dir]))
+        data.y_err_vals = np.array(np.sqrt(np.sum(inerrors*inerrors,axis=zaxes_dict[int_dir])))
 
         return data
 
