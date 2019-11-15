@@ -153,10 +153,10 @@ class Data1D(DataMcCode):
             xres.append(np.sum(xcombi)/len(xcombi))
             yres.append(np.sum(ycombi)/len(xcombi))
             eres.append(np.sqrt(np.sum(np.array(ecombi)*np.array(ecombi)))/len(xcombi))
-        outcls.xvals = xres
-        outcls.yvals = yres
-        outcls.y_err_vals = eres
-        outcls.title = outcls.title+"bined to {}".format(binwidth)
+        outcls.xvals = np.array(xres)
+        outcls.yvals = np.array(yres)
+        outcls.y_err_vals = np.array(eres)
+        outcls.title = outcls.title+" bined to {}".format(binwidth)
         outcls.xlimits = (np.min(xres),np.max(xres))
         return outcls
     def peakstats(self):
