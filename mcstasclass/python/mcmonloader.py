@@ -159,7 +159,15 @@ class Data1D(DataMcCode):
         outcls.title = outcls.title+"bined to {}".format(binwidth)
         outcls.xlimits = (np.min(xres),np.max(xres))
         return outcls
-
+    def peakstats(self):
+        """
+        Calculate statistics assuming there is a peak.
+        returns total area, center, and width
+        """
+        area = np.sum(self.yvals)
+        center = np.sum(self.yvals*self.xvals)/np.sum(yvals)
+        wid = np.sqrt(np.sum((self.xvals-center)**2)/np.sum(yvals))
+        return(area,center,wid)
 
 class Data2D(DataMcCode):
     ''' PSD data type '''
