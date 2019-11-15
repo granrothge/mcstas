@@ -165,8 +165,8 @@ class Data1D(DataMcCode):
         returns total area, center, and width
         """
         area = np.sum(self.yvals)
-        center = np.sum(self.yvals*self.xvals)/np.sum(yvals)
-        wid = np.sqrt(np.sum((self.xvals-center)**2)/np.sum(yvals))
+        center = np.sum(self.yvals*self.xvals)/np.sum(self.yvals)
+        wid = np.sqrt(np.sum((self.xvals-center)**2)/np.sum(self.yvals))
         return(area,center,wid)
 
 class Data2D(DataMcCode):
@@ -331,9 +331,9 @@ def _parse_1D_monitor(text):
             y_err_vals.append(float(vals[2]))
             Nvals.append(float(vals[3]))
 
-        data.xvals = xvals
-        data.yvals = yvals
-        data.y_err_vals = y_err_vals
+        data.xvals = np.array(xvals)
+        data.yvals = np.array(yvals)
+        data.y_err_vals = np.array(y_err_vals)
         data.Nvals = Nvals
 
     except Exception as e:
