@@ -166,7 +166,7 @@ class Data1D(DataMcCode):
         """
         area = np.sum(self.yvals)
         center = np.sum(self.yvals*self.xvals)/np.sum(self.yvals)
-        wid = np.sqrt(self.yvals*np.sum((self.xvals-center)**2)/np.sum(self.yvals))
+        wid = np.sqrt(np.sum(self.yvals*(self.xvals-center)**2)/np.sum(self.yvals))
         return(area,center,wid)
 
 class Data2D(DataMcCode):
