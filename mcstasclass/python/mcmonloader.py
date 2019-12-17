@@ -217,7 +217,7 @@ class Data2D(DataMcCode):
         """
         zarr = np.array(self.zvals)
         zshp = zarr.shape
-        xvec = np.linspace(self.xylimits[0],self.xylimits[1],zshp[0]+1)
+        xvec = np.linspace(self.xylimits[0],self.xylimits[1],zshp[1]+1)
         yvec = np.linspace(self.xylimits[2],self.xylimits[3],zshp[0]+1)
         return xvec,yvec
 
