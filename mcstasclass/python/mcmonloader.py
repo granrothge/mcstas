@@ -105,15 +105,17 @@ class Data1D(DataMcCode):
         """
         if ax==None:
             fig, ax= plt.subplots()
-        ax.errorbar(self.xvals,self.yvals,self.y_err_vals,**kwargs)
+        im = ax.errorbar(self.xvals,self.yvals,self.y_err_vals,**kwargs)
         self._add_titles(ax)
+        return im
 
     def plot(self,ax=None,**kwargs):
         """plot an x y plot"""
         if ax==None:
             fig, ax= plt.subplots()
-        ax.plot(self.xvals,self.yvals,**kwargs)
+        im = ax.plot(self.xvals,self.yvals,**kwargs)
         self._add_titles(ax)
+        return im
 
     def bin(self, binwidth):
         """
@@ -208,8 +210,9 @@ class Data2D(DataMcCode):
         if ax==None:
             fig, ax= plt.subplots()
         xvals,yvals=self.createxyvec()
-        ax.pcolor(xvals,yvals,self.zvals,**kwargs)
+        im = ax.pcolor(xvals,yvals,self.zvals,**kwargs)
         self._add_titles(ax)
+        return im 
 
     def createxyvec(self):
         """
