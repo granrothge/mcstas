@@ -212,7 +212,7 @@ class Data2D(DataMcCode):
         xvals,yvals=self.createxyvec()
         im = ax.pcolor(xvals,yvals,self.zvals,**kwargs)
         self._add_titles(ax)
-        return im 
+        return im
 
     def createxyvec(self):
         """
@@ -235,35 +235,39 @@ class Data2D(DataMcCode):
         xylimits = self.xylimits
         xylimits_idx = np.zeros(4,dtype=np.int)
         xylimitsidx_dict = {'x':[2,3],'y':[0,1]}
-        xyvar_dict = {'x':self.xvar,'y':self.yvar}
-        xylabel_dict = {'x':self.xlabel,'y':self.ylabel}
-        xylimits_dict = {'x':self.xylimits[:2],'y':self.xylimits[2:]}
-        zaxes_dict = {'x':1,'y':0}
-        int_dir = np.lib.arraysetops.setxor1d(cutdir,np.array(list(xyvar_dict.keys())))[0]
-
+        xyvar_dict = {'x': self.xvar, 'y': self.yvar}
+        xylabel_dict = {'x': self.xlabel, 'y': self.ylabel}
+        xylimits_dict = {'x': self.xylimits[:2], 'y': self.xylimits[2:]}
+        zaxes_dict = {'x': 1, 'y': 0}
+        int_dir = np.lib.arraysetops.setxor1d(cutdir, np.array(list(xyvar_dict.keys())))[0]
+#        print(int_dir)
         data = Data1D()
         data.component = "cut from {}".format(self.filename)
         data.filename = self.filename
-        data.title = "${}\pm{}$ in {}".format(cutcen,cutwidth/2,int_dir)
+        data.title = "${}\pm{}$ in {}".format(cutcen, cutwidth/2, int_dir)
         data.xvar = xyvar_dict[cutdir]
         data.xlabel = xylabel_dict[cutdir]
-        xvals,yvals = self.createxyvec()
-        xyvals_dict = {'x':xvals,'y':yvals}
+        xvals, yvals = self.createxyvec()
+        xyvals_dict = {'x': xvals, 'y': yvals}
         zvals = np.array(self.zvals)
         errvals = np.array(self.errors)
         if xlims == None:
             data.xlimits = xylimits_dict[cutdir]
-            xmin_idx=0
-            xmax_idx=-1
+            xmin_idx = 0
+            xmax_idx = -1
         else:
-            xmin_idx = np.where(xyvals_dict[cutdir]<xlims[0])[0].max()
-            xmax_idx = np.where(xyvals_dict[cutdir]>xlims[1])[0].min()
-            data.xlimits = (xyvals_dict[cutdir][xmin_idx],xyvals_dict[cutdir][xmax_idx])
-        xylimits_idx[xylimitsidx_dict[cutdir]]=[xmin_idx,xmax_idx]
+            xmin_idx = np.where(xyvals_dict[cutdir] < xlims[0])[0].max()
+            xmax_idx = np.where(xyvals_dict[cutdir] > xlims[1])[0].min()
+            data.xlimits = (xyvals_dict[cutdir][xmin_idx], xyvals_dict[cutdir][xmax_idx])
+        xylimits_idx[xylimitsidx_dict[cutdir]] = [xmin_idx, xmax_idx]
         data.yvar = self.zvar
-        cut_min_idx = np.where(xyvals_dict[int_dir] < (cutcen-cutwidth/2.0))[0].max()
-        cut_max_idx = np.where(xyvals_dict[int_dir] > (cutcen+cutwidth/2.0))[0].min()
-        xylimits_idx[xylimitsidx_dict[int_dir]] = [cut_min_idx,cut_max_idx]
+        try:
+            cut_min_idx = np.where(xyvals_dict[int_dir] < (cutcen-cutwidth/2.0))[0].max()
+            cut_max_idx = np.where(xyvals_dict[int_dir] > (cutcen+cutwidth/2.0))[0].min()
+        except ValueError:
+            raise Exception('''check to see that the width is not ouside
+            the maximum limits of the data''')
+        xylimits_idx[xylimitsidx_dict[int_dir]] = [cut_min_idx, cut_max_idx]
         #print (xylimits_idx)
         #note need to convert bin boundaries to centers for 1D data set.
         data.xvals = np.array((xyvals_dict[cutdir][xmin_idx:(xmax_idx-1)]+xyvals_dict[cutdir][(xmin_idx+1):xmax_idx]))/2
