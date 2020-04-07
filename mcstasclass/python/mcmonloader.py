@@ -60,6 +60,40 @@ class Data1D(DataMcCode):
         self.y_err_vals = []
         self.Nvals = []
 
+    def __truediv__(self, other):
+        """
+        divide by a 1D instance or a constant
+        """
+        if not isinstance(other, (Data1D, float, int)):
+            raise RuntimeError("other must be a 1D instance or a constant")
+        outdat = Data1D()
+        outdat.xvals = self.xvals
+        if isinstance(other, Data1D):
+            outdat.yvals = self.yvals/other.yvals
+            outdat.y_err_vals = outdat.yvals*np.sqrt((self.y_err_vals/self.yvals)**2 +
+                                                     (other.y_err_vals/other.yvals)**2)
+        else:
+            outdat.yvals = self.yvals/other
+            outdat.y_err_vals = self.y_err_vals/other
+        return outdat
+
+    def __mul__(self, other):
+        """
+        multiply by a 1D instance or a constant
+        """
+        if not isinstance(other, (Data1D, float, int)):
+            raise RuntimeError("other must be a 1D instance or a constant")
+        outdat = Data1D()
+        outdat.xvals = self.xvals
+        if isinstance(other, Data1D):
+            outdat.yvals = self.yvals * other.yvals
+            outdat.y_err_vals = outdat.yvals*np.sqrt((self.y_err_vals/self.yvals)**2 +
+                                                     (other.y_err_vals/other.yvals)**2)
+        else:
+            outdat.yvals = self.yvals * other
+            outdat.y_err_vals = self.y_err_vals * other
+        return outdat
+
     def clone(self):
         data = Data1D()
 
@@ -133,13 +167,13 @@ class Data1D(DataMcCode):
         ycombi = []
         ecombi = []
         # for storing the results
-        xres=[]
-        yres=[]
-        eres=[]
+        xres = []
+        yres = []
+        eres = []
 
         for idx, xval in enumerate(x):
-            if len(xcombi)>0:
-                if (xval-xcombi[0])>binwidth:
+            if len(xcombi) > 0:
+                if (xval-xcombi[0]) > binwidth:
                     xres.append(np.sum(xcombi)/len(xcombi))
                     yres.append(np.sum(ycombi)/len(xcombi))
                     eres.append(np.sqrt(np.sum(np.array(ecombi)*np.array(ecombi)))/len(xcombi))
@@ -151,7 +185,7 @@ class Data1D(DataMcCode):
                 ycombi.append(y[idx])
                 ecombi.append(e[idx])
         # handle last point
-        if len(xcombi)>0:
+        if len(xcombi) > 0:
             xres.append(np.sum(xcombi)/len(xcombi))
             yres.append(np.sum(ycombi)/len(xcombi))
             eres.append(np.sqrt(np.sum(np.array(ecombi)*np.array(ecombi)))/len(xcombi))
@@ -159,8 +193,9 @@ class Data1D(DataMcCode):
         outcls.yvals = np.array(yres)
         outcls.y_err_vals = np.array(eres)
         outcls.title = outcls.title+" bined to {}".format(binwidth)
-        outcls.xlimits = (np.min(xres),np.max(xres))
+        outcls.xlimits = (np.min(xres), np.max(xres))
         return outcls
+
     def peakstats(self):
         """
         Calculate statistics assuming there is a peak.
