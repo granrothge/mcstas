@@ -68,6 +68,7 @@ class Data1D(DataMcCode):
             raise RuntimeError("other must be a 1D instance or a constant")
         outdat = Data1D()
         outdat.xvals = self.xvals
+        outdat.xlabel = self.xlabel
         if isinstance(other, Data1D):
             outdat.yvals = self.yvals/other.yvals
             outdat.y_err_vals = outdat.yvals*np.sqrt((self.y_err_vals/self.yvals)**2 +
@@ -85,6 +86,7 @@ class Data1D(DataMcCode):
             raise RuntimeError("other must be a 1D instance or a constant")
         outdat = Data1D()
         outdat.xvals = self.xvals
+        outdat.xlabel = self.xlabel
         if isinstance(other, Data1D):
             outdat.yvals = self.yvals * other.yvals
             outdat.y_err_vals = outdat.yvals*np.sqrt((self.y_err_vals/self.yvals)**2 +
