@@ -486,7 +486,7 @@ def load_ascii_monitor(monfile):
         m = re.search('\# type: (\w+)', text)
         typ = m.group(1)
         if typ == 'array_0d':
-            print("load_monitor: Not loading 0d dataset %s" % monitorfile)
+            print("load_monitor: Not loading 0d dataset %s" % monfile)
             data = Data0D()
         elif typ == 'array_1d':
             data = _parse_1D_monitor(text)
