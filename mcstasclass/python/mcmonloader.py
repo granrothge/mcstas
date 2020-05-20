@@ -135,21 +135,21 @@ class Data1D(DataMcCode):
     def __str__(self):
         return 'Data1D, ' + self.get_stats_title()
 
-    def errorbar(self,ax=None,**kwargs):
+    def errorbar(self, ax=None, **kwargs):
         """
         plot an errorbar plot
         """
-        if ax==None:
-            fig, ax= plt.subplots()
-        im = ax.errorbar(self.xvals,self.yvals,self.y_err_vals,**kwargs)
+        if ax == None:
+            fig, ax = plt.subplots()
+        im = ax.errorbar(self.xvals, self.yvals, self.y_err_vals, **kwargs)
         self._add_titles(ax)
         return im
 
-    def plot(self,ax=None,**kwargs):
+    def plot(self, ax=None, **kwargs):
         """plot an x y plot"""
         if ax==None:
-            fig, ax= plt.subplots()
-        im = ax.plot(self.xvals,self.yvals,**kwargs)
+            fig, ax = plt.subplots()
+        im = ax.plot(self.xvals, self.yvals, **kwargs)
         self._add_titles(ax)
         return im
 
@@ -194,7 +194,7 @@ class Data1D(DataMcCode):
         outcls.xvals = np.array(xres)
         outcls.yvals = np.array(yres)
         outcls.y_err_vals = np.array(eres)
-        outcls.title = outcls.title+" bined to {}".format(binwidth)
+        outcls.title = outcls.title+" binned to {}".format(binwidth)
         outcls.xlimits = (np.min(xres), np.max(xres))
         return outcls
 
@@ -206,10 +206,12 @@ class Data1D(DataMcCode):
         area = np.sum(self.yvals)
         center = np.sum(self.yvals*self.xvals)/np.sum(self.yvals)
         wid = np.sqrt(np.sum(self.yvals*(self.xvals-center)**2)/np.sum(self.yvals))
-        return(area,center,wid)
+        return(area, center, wid)
+
 
 class Data2D(DataMcCode):
     ''' PSD data type '''
+
     def __init__(self):
         super(Data2D, self).__init__()
 
@@ -223,10 +225,10 @@ class Data2D(DataMcCode):
         self.xvar = ''
         self.yvar = ''
         self.zvar = ''
-        self.xylimits = () # quadruple
+        self.xylimits = ()  # quadruple
 
-        self.values = () # triplet
-        self.statistics = '' # quadruple
+        self.values = ()  # triplet
+        self.statistics = ''  # quadruple
         self.signal = ''
 
         # data references
@@ -236,18 +238,19 @@ class Data2D(DataMcCode):
 
     def get_stats_title(self):
         '''I=.... Err=... N=...; X0=...; dX=...;'''
-        stitle = '%s=%e Err=%e N=%d' % (self.zvar, self.values[0], self.values[1], self.values[2])
+        stitle = '%s=%e Err=%e N=%d' % (self.zvar, self.values[0],
+                                        self.values[1], self.values[2])
         return stitle
 
     def __str__(self):
         return 'Data2D, ' + self.get_stats_title()
 
-    def pcolor(self,ax=None,**kwargs):
+    def pcolor(self, ax=None, **kwargs):
         """ make a pcolor plot of a 2D mcstas monitor """
         if ax==None:
-            fig, ax= plt.subplots()
-        xvals,yvals=self.createxyvec()
-        im = ax.pcolor(xvals,yvals,self.zvals,**kwargs)
+            fig, ax = plt.subplots()
+        xvals, yvals = self.createxyvec()
+        im = ax.pcolor(xvals, yvals, self.zvals, **kwargs)
         self._add_titles(ax)
         return im
 
@@ -257,11 +260,11 @@ class Data2D(DataMcCode):
         """
         zarr = np.array(self.zvals)
         zshp = zarr.shape
-        xvec = np.linspace(self.xylimits[0],self.xylimits[1],zshp[1]+1)
-        yvec = np.linspace(self.xylimits[2],self.xylimits[3],zshp[0]+1)
-        return xvec,yvec
+        xvec = np.linspace(self.xylimits[0], self.xylimits[1], zshp[1]+1)
+        yvec = np.linspace(self.xylimits[2], self.xylimits[3], zshp[0]+1)
+        return xvec, yvec
 
-    def cut(self,cutdir,cutcen,cutwidth,xlims=None):
+    def cut(self, cutdir, cutcen, cutwidth, xlims=None):
         """ cut a 2D McStas data set into a 1D data set
             cutdir: must be 'x' or 'y'
             cutcen: center in other direction
@@ -270,8 +273,8 @@ class Data2D(DataMcCode):
 
         """
         xylimits = self.xylimits
-        xylimits_idx = np.zeros(4,dtype=np.int)
-        xylimitsidx_dict = {'x':[2,3],'y':[0,1]}
+        xylimits_idx = np.zeros(4, dtype=np.int)
+        xylimitsidx_dict = {'x': [2, 3], 'y': [0, 1]}
         xyvar_dict = {'x': self.xvar, 'y': self.yvar}
         xylabel_dict = {'x': self.xlabel, 'y': self.ylabel}
         xylimits_dict = {'x': self.xylimits[:2], 'y': self.xylimits[2:]}
@@ -305,12 +308,12 @@ class Data2D(DataMcCode):
             raise Exception('''check to see that the width is not ouside
             the maximum limits of the data''')
         xylimits_idx[xylimitsidx_dict[int_dir]] = [cut_min_idx, cut_max_idx]
-        #print (xylimits_idx)
-        #note need to convert bin boundaries to centers for 1D data set.
+        # print (xylimits_idx)
+        # note need to convert bin boundaries to centers for 1D data set.
         data.xvals = np.array((xyvals_dict[cutdir][xmin_idx:(xmax_idx-1)]+xyvals_dict[cutdir][(xmin_idx+1):xmax_idx]))/2
-        data.yvals = np.array(np.sum(zvals[xylimits_idx[0]:xylimits_idx[1],xylimits_idx[2]:xylimits_idx[3]],axis=zaxes_dict[int_dir]))
-        inerrors = errvals[xylimits_idx[0]:xylimits_idx[1],xylimits_idx[2]:xylimits_idx[3]]
-        data.y_err_vals = np.array(np.sqrt(np.sum(inerrors*inerrors,axis=zaxes_dict[int_dir])))
+        data.yvals = np.array(np.sum(zvals[xylimits_idx[0]:xylimits_idx[1], xylimits_idx[2]:xylimits_idx[3]],axis=zaxes_dict[int_dir]))
+        inerrors = errvals[xylimits_idx[0]:xylimits_idx[1], xylimits_idx[2]:xylimits_idx[3]]
+        data.y_err_vals = np.array(np.sqrt(np.sum(inerrors*inerrors, axis=zaxes_dict[int_dir])))
 
         return data
 
