@@ -294,7 +294,8 @@ double zero_find(double (*func)(double, double),double yval,double xmin,double x
   }
   dx=xh-xl;
   rtb=xl;
-  while(fabs((*func)(rtb,yval))>tol){
+  int max_iter = 10000, iter_no=0;
+  while(fabs((*func)(rtb,yval))>tol && iter_no++<max_iter){
     dx=dx*0.5;
     xmid=rtb+dx;
     fmid=(*func)(xmid,yval);
@@ -491,7 +492,7 @@ TRACE
    /*First generate E random value */
     randp=EPmin+rand01()*(EPmax-EPmin);
     /* find E value corresponding to random probability */
-    Eval=zero_find(Pfunc,randp,inxvec[idxstart],inxvec[idxstop],1e-5);
+    Eval=zero_find(Pfunc,randp,inxvec[idxstart],inxvec[idxstop],1e-7);
    /* from a known E value generate an emission time value */
    /* find the index of the E values that bracket the random E value */
    idx1=0;
