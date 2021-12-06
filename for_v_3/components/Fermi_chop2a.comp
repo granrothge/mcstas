@@ -30,29 +30,34 @@
 * %End
 *******************************************************************/
 DEFINE COMPONENT Fermi_chop2a
-DEFINITION PARAMETERS (len, w, nu, delta, tc, ymin, ymax, nchan, bw, blader)
-SETTING PARAMETERS ()
+DEFINITION PARAMETERS ()
+SETTING PARAMETERS (len, w, nu, delta, tc, ymin, ymax, nchan, bw, blader)
 OUTPUT PARAMETERS (omega, r_blade, x_width, nn, tdr)
 /*STATE PARAMETERS (x, y, z, vx, vy, vz, t, s1, s2, p)*/
 SHARE
 %{
 #ifndef FERMI_CHOP_DEFS
 #define FERMI_CHOP_DEFS   
-    /* routine to calculate acos in proper quadrant  range = 0 to 2PI*/ 
-    double acos0_2pi(double x,double y)
-     {
+   /* routine to calculate acos in proper quadrant  range = 0 to 2PI*/
+   #pragma acc routine 
+   double acos0_2pi(double x,double y)
+    {
        if (y>0.0){ 
          return acos(x);
        }
          return 2.0*PI-acos(x);
-     }
+    }
+
    /*routine to calculate x and y positions of a neutron in a fermi chopper */
+   #pragma acc routine
    void neutxypos(double *x, double *y, double phi, double inrad,double c[])
     {      
         *x=c[0]+inrad*cos(phi);
         *y=c[1]+inrad*sin(phi);
     }
+
     /* routine to calculate the origin of a circle that describes the neutron path through the chopper */  
+    #pragma acc routine
     void calccenter(double c[],double zr[], double xr[]){
       double denom, A,B,C,D,a,b;
       denom=2*(-zr[0]*xr[2] +zr[0]*xr[1]+ zr[1]*xr[2]+xr[0]*zr[2]-xr[0]*zr[1] - xr[1]*zr[2]);
@@ -64,22 +69,20 @@ SHARE
     }
 
 #endif
-%}
 
-    DECLARE
-%{
-
-    double omega,off,splen,rad,sw,tw;
-    /* function that describes the shape of the blades */
+/* function that describes the shape of the blades */
+    #pragma acc routine
     double blades(double zin,double rin,double off){
         if (rin!=0.0)
      	  return rin*(1-cos(asin(zin/fabs(rin))))+off;
         else
        	  return 0;
     }
-    /* function to calculate which channel the neturon is in and to check if it is in a blade 
-     *  or outside the slit package 
-     * return 0 if neutron does not transmit return 1 with channel number if neutron will pass*/
+
+/* function to calculate which channel the neturon is in and to check if it is in a blade 
+ *  or outside the slit package 
+ * return 0 if neutron does not transmit return 1 with channel number if neutron will pass*/
+    #pragma acc routine
     int checkabsorb(double phi,int *chan_num, double inrad,double inw, double insw, double inbw, double c[]){
      double xtmp,neuzr,neuxr;
      neutxypos(&neuzr,&neuxr,phi,inrad,c);
@@ -93,6 +96,18 @@ SHARE
          return 0;
      return 1;
     }
+
+%}
+
+    DECLARE
+%{
+
+    double omega;
+    double off;
+    double splen; 
+    double rad;
+    double sw;
+    double tw;  
   
 %}
 INITIALIZE
@@ -164,7 +179,7 @@ TRACE
       ABSORB;
      if ((chan_num!=chan_num0) || (chan_num>nchan))
        ABSORB;
-     /*  If the current dphi is positive calcualte points until a point is beyond phivec[1]
+     /*  If the current dphi is positive calculate points until a point is beyond phivec[1]
                     Check to see if the point is absorbed after each new point is generated stop if more than 129 iterations are performed
             */
      if (dphi>0){
