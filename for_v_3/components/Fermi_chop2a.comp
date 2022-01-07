@@ -83,7 +83,8 @@ SHARE
  *  or outside the slit package 
  * return 0 if neutron does not transmit return 1 with channel number if neutron will pass*/
     #pragma acc routine
-    int checkabsorb(double phi,int *chan_num, double inrad,double inw, double insw, double inbw, double c[]){
+    int checkabsorb(double phi,int *chan_num, double inrad,double inw, double insw, 
+                    double inbw, double blader, double off, double c[]){
      double xtmp,neuzr,neuxr;
      neutxypos(&neuzr,&neuxr,phi,inrad,c);
   // printf("xr:%g zr:%g phi: %g r: %g c[0]: %g c[1]: %g\n",neuxr,neuzr,phi,inrad,c[0],c[1]);
@@ -168,14 +169,14 @@ TRACE
    dphi=phivec[1]-phivec[0];  /* initial dphi */
    idx1=2;
    phivec[idx1]=phivec[0]+dphi/2.0;  /* calculate center point */
-   if (!checkabsorb(phivec[idx1],&chan_num,nrad,tw,sw,bw,c))
+   if (!checkabsorb(phivec[idx1],&chan_num,nrad,tw,sw,bw,blader,off,c))
       ABSORB;
    chan_num0=chan_num;
    while (idx1<129){
      dphi=phivec[1]-phivec[idx1];
      idx1++;
      phivec[idx1]=phivec[0]+dphi/2.0;
-     if (!checkabsorb(phivec[idx1],&chan_num,nrad,tw,sw,bw,c))
+     if (!checkabsorb(phivec[idx1],&chan_num,nrad,tw,sw,bw,blader,off,c))
       ABSORB;
      if ((chan_num!=chan_num0) || (chan_num>nchan))
        ABSORB;
@@ -187,7 +188,7 @@ TRACE
         /* printf("phivec[%i]: %g dphi: %g phivec[1]: %g\n", idx1,phivec[idx1],dphi,phivec[1]);*/
          idx1++;
          phivec[idx1]=phivec[idx1-1]+dphi;
-         if (!checkabsorb(phivec[idx1],&chan_num,nrad,tw,sw,bw,c))
+         if (!checkabsorb(phivec[idx1],&chan_num,nrad,tw,sw,bw,blader,off,c))
            ABSORB;
      //   printf("chan_num0: %i chan_num: %i\n",chan_num0,chan_num);
          if ((chan_num!=chan_num0) || (chan_num>nchan))
@@ -196,7 +197,7 @@ TRACE
        }
        if (phivec[idx1]>=phivec[1]) idx1--; //remove the point that is beyond phivec[1]
      }
-     /*  If the current dphi is negative calculatete points until a point is beyond phivec[1]
+     /*  If the current dphi is negative calculate points until a point is beyond phivec[1]
                     Check to see if the point is absorbed after each new point is generated stop if more than 129 iterations are performed
             */
      else if (dphi<0){
@@ -204,7 +205,7 @@ TRACE
         /* printf("phivec[%i]: %g\n", idx1,phivec[idx1]);*/
          idx1++;
          phivec[idx1]=phivec[idx1-1]+dphi;
-         if (!checkabsorb(phivec[idx1],&chan_num,nrad,tw,sw,bw,c))
+         if (!checkabsorb(phivec[idx1],&chan_num,nrad,tw,sw,bw,blader,off,c))
            ABSORB;
       //   printf("chan_num0: %i chan_num: %i\n",chan_num0,chan_num);
          if ((chan_num!=chan_num0) || (chan_num>nchan))
