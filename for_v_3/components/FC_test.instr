@@ -1,3 +1,30 @@
+/*******************************************************************************
+*
+* McStas, neutron ray-tracing package
+*         Copyright (C) 1997-2022, All rights reserved
+*         Risoe National Laboratory, Roskilde, Denmark
+*         Institut Laue Langevin, Grenoble, France
+*
+* Instrument: FC_test
+*
+* %Identification
+* Written by: G. E. Granroth
+* Date: January 2022
+* Origin: Oak Ridge National Laboratory
+* %INSTRUMENT_SITE:SNS
+*
+* 
+*
+* %Description
+* Simple test instrument for the Fermi Chopper 
+* component used in the ARCS and SEQUOIA simulations.
+*
+* 
+* %End
+*******************************************************************************/
+
+
+
 DEFINE INSTRUMENT FC_test(Ec=30.0)
 
 DECLARE 
