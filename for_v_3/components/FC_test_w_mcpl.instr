@@ -1,0 +1,65 @@
+/*******************************************************************************
+*
+* McStas, neutron ray-tracing package
+*         Copyright (C) 1997-2022, All rights reserved
+*         Risoe National Laboratory, Roskilde, Denmark
+*         Institut Laue Langevin, Grenoble, France
+*
+* Instrument: FC_test
+*
+* %Identification
+* Written by: G. E. Granroth
+* Date: January 2022
+* Origin: Oak Ridge National Laboratory
+* %INSTRUMENT_SITE:SNS
+*
+* 
+*
+* %Description
+* Simple test instrument for the Fermi Chopper 
+* component used in the ARCS and SEQUOIA simulations.
+*
+* 
+* %End
+*******************************************************************************/
+
+
+
+DEFINE INSTRUMENT FC_test(Ec=30.0)
+
+DECLARE 
+%{
+    double Elow;
+    double Ehigh;
+    double v_pred;
+    double vlow;
+    double vhigh;
+    double vc;
+
+%}
+
+INITIALIZE
+
+%{
+ Elow=Ec-15;
+ Ehigh=Ec+15;
+ vlow = sqrt(Elow)*SE2V;
+ vhigh = sqrt(Ehigh)*SE2V;
+ vc =sqrt(Ec)*SE2V;
+%}
+
+TRACE
+
+COMPONENT source=Moderator(radius=0.1,Emin=Elow,Emax=Ehigh,
+                 dist=10.5,focus_xw=0.1,focus_yh=0.1)
+AT (0,0,0) ABSOLUTE
+COMPONENT fC = Fermi_chop2a(len=0.1,w=0.05,ymin=-0.05,ymax=0.05,
+                 nchan =10, bw=0.0005,blader=0.635,
+                 nu=300.0,tc=(10.5-0.05)/vc,delta=0.0)
+AT (0,0,10.5) RELATIVE source
+COMPONENT tof_m = TOF_monitor(xwidth=0.1,yheight=0.1,tmin=11.0/vhigh*1e6,
+tmax=11.0/vlow*1e6,nt=600,filename="test.dat")
+AT (0,0,11) RELATIVE source
+COMPONENT MCPLout = MCPL_output(filename="ARCS_vsource")
+AT(0,0,11.1) RELATIVE source
+END
